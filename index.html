@@ -10,14 +10,26 @@
   <style>
     body {
       margin: 0;
-      padding: 0;
-      background-color: #c8102e;
+      padding: 20px;
+      background-color: #12151e;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .btn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background-color: #c8102e;
       color: white;
-      font-family: system-ui, -apple-system, sans-serif;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
     }
   </style>
   <script>
@@ -26,11 +38,16 @@
         navigator.serviceWorker.register('./sw.js');
       });
     }
-    // Instantly loads your Apps Script web app
-    window.location.href = "https://script.google.com/macros/s/AKfycbw64qzpTXmX3Gsf0C5C9WDLWRRnRir6QJORf2Lf4wcH_a8Xp2sNUQy_vDDMLSec9pM/exec";
+
+    // Wait 3 seconds before redirecting so Chrome has time to detect the PWA manifest
+    setTimeout(() => {
+      window.location.href = "https://script.google.com/macros/s/AKfycbw64qzpTXmX3Gsf0C5C9WDLWRRnRir6QJORf2Lf4wcH_a8Xp2sNUQy_vDDMLSec9pM/exec";
+    }, 3000);
   </script>
 </head>
 <body>
-  <p>Opening Danish Tracker...</p>
+  <h2>Danish Tracker</h2>
+  <p>Opening app in 3 seconds...</p>
+  <a class="btn" href="https://script.google.com/macros/s/AKfycbw64qzpTXmX3Gsf0C5C9WDLWRRnRir6QJORf2Lf4wcH_a8Xp2sNUQy_vDDMLSec9pM/exec">Open Immediately</a>
 </body>
 </html>
