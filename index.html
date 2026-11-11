@@ -8,31 +8,29 @@
   <meta name="theme-color" content="#c8102e">
   <link rel="apple-touch-icon" href="icon-192.png">
   <style>
-    body, html {
+    body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
+      background-color: #c8102e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
     }
   </style>
-</head>
-<body>
-  <iframe src="https://script.google.com/macros/s/AKfycbw64qzpTXmX3Gsf0C5C9WDLWRRnRir6QJORf2Lf4wcH_a8Xp2sNUQy_vDDMLSec9pM/exec"></iframe>
-
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('Service Worker registered', reg))
-          .catch(err => console.error('Service Worker registration failed', err));
+        navigator.serviceWorker.register('./sw.js');
       });
     }
+    // Instantly loads your Apps Script web app
+    window.location.href = "https://script.google.com/macros/s/AKfycbw64qzpTXmX3Gsf0C5C9WDLWRRnRir6QJORf2Lf4wcH_a8Xp2sNUQy_vDDMLSec9pM/exec";
   </script>
+</head>
+<body>
+  <p>Opening Danish Tracker...</p>
 </body>
 </html>
