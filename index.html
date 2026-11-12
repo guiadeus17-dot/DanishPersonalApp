@@ -1,36 +1,1615 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Danish Tracker</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#12151e">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background-color: #12151e;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-  </style>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js');
-      });
-    }
-  </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Danish Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&family=Literata:opsz,wght@7..72,400;7..72,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --ink:#1B2430; --muted:#6B7684; --line:#DCE1E7;
+  --flag:#C8102E; --known:#17834A; --learn:#C99A00; --new:#7A8593;
+  --fix:#C8102E; --shadow:0 1px 0 rgba(27,36,48,.06);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12171D; --surface:#1B222B; --ink:#E8ECF1; --muted:#98A3B0; --line:#2B3440;
+    --flag:#FF5A6E; --known:#4CD38A; --learn:#F2CE3A; --new:#8E99A6; --fix:#FF6B7D;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12171D; --surface:#1B222B; --ink:#E8ECF1; --muted:#98A3B0; --line:#2B3440;
+  --flag:#FF5A6E; --known:#4CD38A; --learn:#F2CE3A; --new:#8E99A6; --fix:#FF6B7D;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 18px 120px;transition:transform .28s ease}
+body.paged{overflow:hidden}
+body.paged main{transform:translateX(-25%)}
+.page{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;transform:translateX(100%);visibility:hidden;transition:transform .28s ease,visibility 0s .28s;box-shadow:-10px 0 30px rgba(0,0,0,.08)}
+.page.open{transform:none;visibility:visible;transition:transform .28s ease,visibility 0s}
+.pagebar{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top,0px)) 18px 12px}
+.pagebar h2{flex:1;margin:0;font:800 1.1rem Figtree,system-ui,sans-serif}
+.back{font:600 .95rem Figtree,system-ui,sans-serif;background:var(--flag);color:#fff;border:0;border-radius:12px;padding:9px 16px;cursor:pointer}
+.toggle{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.toggle button{display:flex;align-items:center;background:var(--surface);color:var(--muted);border:0;padding:7px 10px;cursor:pointer}
+.toggle button.on{background:var(--ink);color:var(--bg)}
+.page-inner{max-width:640px;margin:0 auto;padding:6px 18px calc(110px + env(safe-area-inset-bottom,0px))}
+.list.grid{display:flex;flex-wrap:wrap;gap:8px;background:none;border:0;border-radius:0;overflow:visible}
+.list.grid .item{width:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:8px 12px}
+.list.grid .item .tr{display:none}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;letter-spacing:-.01em}
+.flag{width:26px;height:18px;border-radius:3px;background:
+  linear-gradient(var(--flag),var(--flag)) 0 0/9px 7px no-repeat,
+  linear-gradient(var(--flag),var(--flag)) 13px 0/13px 7px no-repeat,
+  linear-gradient(var(--flag),var(--flag)) 0 11px/9px 7px no-repeat,
+  linear-gradient(var(--flag),var(--flag)) 13px 11px/13px 7px no-repeat,#fff}
+.profile{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.9rem}
+.profile select,.profile input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+textarea{width:100%;min-height:110px;resize:vertical;font:400 1.2rem/1.5 Literata,Georgia,serif;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 50px 14px 16px}
+.inwrap{position:relative}
+.clear{position:absolute;top:10px;right:14px;width:32px;height:32px;border-radius:50%;border:0;background:var(--line);color:var(--ink);font-size:1.3rem;line-height:1;cursor:pointer}
+.avatar{width:44px;height:44px;flex:none;border-radius:50%;padding:0;border:2px solid var(--line);overflow:hidden;background:var(--surface);cursor:pointer}
+.avatar img,.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.ini{display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:#fff;font-weight:800}
+.avatar .ini{font-size:1.1rem}
+.who{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:calc(24px + env(safe-area-inset-top,0px)) 20px calc(24px + env(safe-area-inset-bottom,0px));overflow-y:auto}
+.who h2{margin:0;font:700 1.9rem Literata,Georgia,serif}
+.faces{display:flex;flex-wrap:wrap;justify-content:center;gap:22px;max-width:520px}
+.face{display:flex;flex-direction:column;align-items:center;gap:8px;width:96px;background:none;border:0;padding:0;cursor:pointer;font:inherit;color:var(--muted)}
+.pic{position:relative;display:block;width:88px;height:88px;border-radius:50%;overflow:hidden;border:3px solid transparent}
+.face.cur .pic{border-color:var(--ink)}
+.face.cur .nm{color:var(--ink);font-weight:600}
+.pic .ini{font-size:2rem}
+.pic.plus{display:flex;align-items:center;justify-content:center;border:2px dashed var(--muted);font-size:2.2rem;color:var(--muted)}
+.cam{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);color:#fff}
+.addrow{display:flex;gap:8px}
+.addrow input{font:inherit;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.whobar{display:flex;gap:10px}
+.left{display:flex;align-items:center;gap:6px}
+.menubtn{width:40px;height:40px;margin-left:-8px;display:flex;align-items:center;justify-content:center;border:0;border-radius:10px;background:none;color:var(--ink);cursor:pointer}
+.scrim{position:fixed;inset:0;z-index:34;background:rgba(0,0,0,.35)}
+.drawer{position:fixed;top:0;bottom:0;left:0;z-index:35;width:min(270px,80vw);display:flex;flex-direction:column;gap:4px;background:var(--surface);border-right:1px solid var(--line);padding:calc(20px + env(safe-area-inset-top,0px)) 12px 20px;transform:translateX(-100%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s}
+.drawer.open{transform:none;visibility:visible;transition:transform .25s ease,visibility 0s}
+.drawer h2{margin:0 12px 14px;font:800 1.1rem Figtree,system-ui,sans-serif}
+.mode{display:flex;align-items:center;gap:14px;width:100%;padding:12px;border:0;border-radius:12px;background:none;color:var(--ink);font:600 1rem Figtree,system-ui,sans-serif;text-align:left;cursor:pointer}
+.mode svg{flex:none;color:var(--muted)}
+.mode.on{background:var(--bg)}
+.mode.on svg{color:var(--flag)}
+.chathead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.levels{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.levels button{font:600 .9rem Figtree,system-ui,sans-serif;background:var(--surface);color:var(--muted);border:0;padding:8px 14px;cursor:pointer}
+.levels button.on{background:var(--ink);color:var(--bg)}
+.levels button[data-l="easy"].on{background:#1E9E5A;color:#fff}
+.levels button[data-l="medium"].on{background:#E8862A;color:#fff}
+.levels button[data-l="hard"].on{background:#D7263D;color:#fff}
+#v-chat:not([hidden]){display:flex;flex-direction:column;height:calc(100vh - 114px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - 114px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:300px}
+body.chatmode main{padding-bottom:24px}
+body.chatmode #mode,body.chatmode .counts{display:none}
+body.cardsmode main{padding-bottom:24px}
+body.cardsmode #mode,body.cardsmode .counts{display:none}
+body.paged .counts{display:flex!important}
+#v-cards:not([hidden]){display:flex;flex-direction:column;align-items:center}
+.cplay:not([hidden]){width:100%;display:flex;flex-direction:column;align-items:center;gap:18px}
+.csetup:not([hidden]){width:100%;max-width:420px;display:flex;flex-direction:column;gap:24px;margin-top:6px}
+.csetup h2{margin:0;font:700 2rem Literata,Georgia,serif}
+.optgroup{display:flex;flex-direction:column;gap:8px}
+.optlbl{font-weight:600;font-size:.95rem}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;font:600 .95rem Figtree,system-ui,sans-serif;background:var(--surface);color:var(--muted);border:0;padding:13px 8px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.csetnote{margin:0;color:var(--muted);font-size:.9rem}
+.cstart{padding:15px;font-size:1.05rem}
+.cstart:disabled{opacity:.45;cursor:not-allowed}
+.cdone .whobar{justify-content:center;margin-top:16px}
+.glow{position:fixed;top:0;bottom:0;width:80vw;z-index:15;pointer-events:none;opacity:0;transition:opacity .5s ease;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 25%,#000 75%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,#000 25%,#000 75%,transparent 100%)}
+.glow.drag{transition:none}
+.g-right{right:0;background:linear-gradient(to left,rgba(43,182,115,.5) 0%,rgba(43,182,115,.4) 10%,rgba(43,182,115,.28) 24%,rgba(43,182,115,.17) 40%,rgba(43,182,115,.08) 58%,rgba(43,182,115,.025) 78%,rgba(43,182,115,0) 100%)}
+.g-left{left:0;background:linear-gradient(to right,rgba(220,38,60,.46) 0%,rgba(220,38,60,.36) 10%,rgba(220,38,60,.25) 24%,rgba(220,38,60,.15) 40%,rgba(220,38,60,.07) 58%,rgba(220,38,60,.02) 78%,rgba(220,38,60,0) 100%)}
+.sparks{position:fixed;inset:0;z-index:18;pointer-events:none;overflow:hidden}
+.spark{position:absolute;width:var(--w);height:var(--h);border-radius:2px;background:var(--c);opacity:0;will-change:transform,opacity}
+.passed.show{animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+.card.shake{animation:shake .3s ease}
+@keyframes shake{20%{margin-left:-10px}40%{margin-left:10px}60%{margin-left:-6px}80%{margin-left:6px}}
+@media (prefers-reduced-motion:reduce){.spark{display:none}.card.shake{animation:none}}
+.cardshead{width:100%;display:flex;align-items:center;justify-content:space-between}
+.cprog{color:var(--muted);font-size:.9rem}
+.cardzone{position:relative;z-index:17;width:100%;display:flex;justify-content:center;padding-top:4px}
+.card{position:relative;width:min(340px,100%);height:min(440px,52vh);min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:56px 24px;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.08);touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab;transition:transform .25s ease,box-shadow .2s ease,border-color .2s ease}
+.card.drag{transition:none;cursor:grabbing}
+.cside{position:absolute;top:22px;left:24px;display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted)}
+.cside .fl,.cfoot .fl{width:22px;height:16px}
+.cfoot{position:absolute;right:24px;bottom:22px;transform:rotate(180deg);display:flex;opacity:.55}
+.card::before{content:"";position:absolute;inset:10px;border:1.5px solid var(--line);border-radius:14px;pointer-events:none}
+.card::after{content:"";position:absolute;inset:16px;border:1px dashed var(--line);border-radius:10px;opacity:.6;pointer-events:none}
+.cardwrap{width:min(340px,100%);display:flex;justify-content:center;transition:filter .2s ease;filter:drop-shadow(1px 0 0 var(--line)) drop-shadow(-1px 0 0 var(--line)) drop-shadow(0 1px 0 var(--line)) drop-shadow(0 -1px 0 var(--line)) drop-shadow(0 10px 14px rgba(0,0,0,.07))}
+.cardwrap .card{width:100%;border-color:transparent;box-shadow:none;-webkit-mask:radial-gradient(circle 13px at 0 50%,#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 13px at 100% 50%,#0000 97%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle 13px at 0 50%,#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 13px at 100% 50%,#0000 97%,#000) right/51% 100% no-repeat}
+.cword{font:700 2.4rem/1.2 Literata,Georgia,serif;text-align:center;overflow-wrap:anywhere}
+.cans{min-width:60%;padding-top:14px;border-top:1px solid var(--line);font:400 1.5rem/1.3 Literata,Georgia,serif;color:var(--muted);text-align:center;overflow-wrap:anywhere}
+.ctap{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:.85rem;color:var(--muted);opacity:.7}
+.card .speak-sm{position:absolute;top:18px;right:18px;margin:0;z-index:1;box-shadow:0 0 0 6px var(--surface),0 0 0 7.5px var(--line)}
+.stamp{position:absolute;left:50%;top:50%;z-index:2;padding:8px 22px;border:5px solid;border-radius:16px;background:var(--surface);font:900 2.6rem/1 Figtree,system-ui,sans-serif;white-space:nowrap;opacity:0;pointer-events:none}
+.stamp.yes{color:var(--known);transform:translate(-50%,-50%) rotate(-14deg)}
+.stamp.no{color:var(--fix);transform:translate(-50%,-50%) rotate(14deg)}
+.cardbtns{display:flex;gap:28px}
+.cbtn{width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.cbtn.miss{color:var(--fix)}
+.cbtn.hit{color:var(--known)}
+.cdone,.cempty{text-align:center;max-width:340px;margin-top:30px}
+.cdone h2{margin:0 0 8px;font:700 1.7rem Literata,Georgia,serif}
+.cdone p,.cempty{color:var(--muted)}
+.ask{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4)}
+.askbox{width:100%;max-width:340px;padding:22px;border-radius:18px;background:var(--surface);text-align:center}
+.askbox p{margin:0 0 18px;font-size:1.05rem}
+.askword{font:700 2.6rem/1.15 Literata,Georgia,serif;color:var(--known);overflow-wrap:anywhere}
+.asktr{margin:4px 0 14px;color:var(--muted);font-size:1.1rem}
+.askbox .whobar{justify-content:center}
+.chatnote{margin:-6px 0 12px;font-size:.8rem;color:var(--muted);opacity:.8}
+.drawer-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.filters{display:flex;margin:10px 0 14px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.filters button{flex:1;font:600 .9rem Figtree,system-ui,sans-serif;background:var(--surface);color:var(--muted);border:0;padding:9px 6px;cursor:pointer}
+.filters button.on{background:var(--ink);color:var(--bg)}
+.log{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:12px;padding:2px 2px 8px}
+.msg{flex:none;max-width:85%;padding:12px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.msg.bot{align-self:flex-start;border-bottom-left-radius:4px}
+.msg.user{align-self:flex-end;border-bottom-right-radius:4px;border-color:var(--muted)}
+.msg .da{margin:0;font:400 1.2rem/1.55 Literata,Georgia,serif}
+.msg.pending .da{color:var(--muted)}
+.msg.error{color:var(--fix);font-size:.9rem}
+.msg.error p{margin:0}
+.tools{display:flex;align-items:center;gap:12px;margin-top:8px}
+.tools .speak-sm{width:34px;height:34px;margin:0}
+.eng{font:600 .8rem Figtree,system-ui,sans-serif;background:none;border:0;color:var(--muted);cursor:pointer;padding:4px 0}
+.msg .en{margin:6px 0 0;color:var(--muted);font-size:.95rem}
+.fixline{margin:8px 0 0;font-size:.85rem;color:var(--muted)}
+.fixline b{color:var(--fix);font-weight:600}
+.composer{display:flex;align-items:flex-end;gap:8px;padding-top:10px}
+.composer textarea{min-height:0;height:48px;max-height:140px;resize:none;font-size:1.05rem;padding:12px 14px;border-radius:14px}
+.composer .send{padding:12px 18px}
+.editor{display:flex;flex-direction:column;align-items:center;gap:14px}
+.pic.big{width:128px;height:128px;padding:0;background:none;cursor:pointer}
+.editor input{font:inherit;width:220px;text-align:center;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.speak{position:absolute;top:0;left:50%;transform:translate(-50%,-50%) rotate(-45deg);width:60px;height:60px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface);color:var(--muted);border:1px solid;border-color:var(--line) var(--line) transparent transparent;cursor:pointer;transition:background .15s,color .15s}
+.speak svg{position:relative;transform:rotate(45deg)}
+.speak::before{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--line);transition:background .15s}
+.sheet .speak.playing{background:var(--surface);color:#fff}
+.sheet .speak.playing::before{background:var(--flag)}
+.speak:active{transform:translate(-50%,-50%) rotate(-45deg) scale(.94)}
+.speak-sm,.mic{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;border:0;background:var(--line);color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.speak.playing,.speak-sm.playing,.mic.live{background:var(--flag);color:#fff}
+.mic{position:absolute;right:10px;bottom:14px;background:none}
+.hint{margin:6px 0 0;font-size:.8rem;color:var(--muted);opacity:.6}
+.micmsg{font-size:.85rem;color:var(--muted);margin:6px 0 0}
+.sentrow{display:flex;align-items:flex-start;gap:12px}
+.sentrow .sentence{flex:1;min-width:0}
+.speak-sm{margin-top:8px}
+textarea:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--flag);outline-offset:2px}
+.inwrap textarea:focus-visible{outline:none}
+.row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.primary{font:600 1rem Figtree,system-ui,sans-serif;background:var(--flag);color:#fff;border:0;border-radius:12px;padding:12px 22px;cursor:pointer}
+.primary:disabled{opacity:.6;cursor:wait}
+.bar{justify-content:space-between;flex-wrap:nowrap;gap:6px}
+.bar #sugg{padding:11px 10px;font-size:.9rem}
+.bar #go{padding:12px 16px;font-size:.95rem}
+.gogroup{display:flex;gap:6px}
+.swap{display:flex;align-items:center;gap:6px;padding:10px 10px;font-size:.85rem;letter-spacing:.02em}
+.fl{display:inline-flex;flex:none;width:24px;height:17px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.fl svg{width:100%;height:100%;display:block}
+.dirrow{display:flex}
+.bigswap{flex:1;justify-content:center;padding:14px 16px;gap:14px}
+.bigswap .fl{width:34px;height:24px;border-radius:4px}
+.dirtxt{color:var(--muted);font-size:.9rem}
+.swap svg{flex:none}
+.ghost{font:600 .95rem Figtree,system-ui,sans-serif;color:var(--muted);background:none;border:1px solid var(--line);border-radius:12px;padding:11px 16px;cursor:pointer}
+.ghost[aria-expanded="true"]{color:var(--ink);border-color:var(--muted)}
+.examples{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:12px}
+.try{font:400 1rem Literata,Georgia,serif;color:var(--muted);background:none;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;text-align:left}
+.count{font:inherit;text-align:left;cursor:pointer;background:var(--bg)}
+.count.on{border-color:var(--ink);color:var(--ink)}
+.list{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.item{display:flex;justify-content:space-between;gap:12px;width:100%;padding:11px 14px;background:none;border:0;border-top:1px solid var(--line);font:inherit;color:var(--muted);cursor:pointer;text-align:left}
+.item:first-child{border-top:0}
+.item .w{font:400 1.1rem Literata,Georgia,serif;margin:0;padding:0}
+.empty{padding:14px;color:var(--muted);margin:0}
+.result{margin-top:28px}
+.fixnote{font-size:.9rem;color:var(--muted);margin:0 0 8px}
+.fixnote s{color:var(--muted)}
+.fixnote b{color:var(--fix);font-weight:600}
+.sentence{font:400 1.7rem/1.6 Literata,Georgia,serif;margin:0 0 10px;word-wrap:break-word}
+.waiting{color:var(--muted);animation:breathe 1.2s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.4}}
+.result.pending .speak-sm{visibility:hidden}
+@media (prefers-reduced-motion:reduce){.waiting{animation:none}}
+.w{cursor:pointer;border-radius:5px;padding:0 2px;margin:0 -2px;color:var(--new)}
+.w.known{color:var(--known);font-weight:700}
+.w.learning{color:var(--learn);font-weight:600}
+.w.fixed{text-decoration:underline wavy var(--fix) 1.5px;text-underline-offset:5px}
+.english{font-size:1.1rem;color:var(--muted);border-left:3px solid var(--line);padding-left:12px;margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:22px;font-size:.85rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%}
+.cdot{display:inline-block;width:9px;height:9px;margin-right:6px;border-radius:50%;vertical-align:1px}
+.choices button{position:relative}
+.choices.haspeeps{margin-top:40px}
+.peeps{position:absolute;right:4px;bottom:calc(100% + 8px);display:flex;pointer-events:none}
+.peep{flex:none;width:28px;height:28px;margin-left:-8px;border-radius:50%;overflow:hidden;border:2px solid var(--surface)}
+.peep:first-child{margin-left:0}
+.peep img{width:100%;height:100%;object-fit:cover;display:block}
+.peep .ini{font-size:.8rem}
+.board{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.race{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;margin:18px auto 0;text-align:left}
+.race .brow{position:relative;border-radius:12px;padding:6px 8px;margin:0 -8px}
+.race .brow.me{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.race .brow.me.rise{box-shadow:0 0 0 2px #1E9E5A,0 0 22px 2px rgba(43,182,115,.45)}
+.cdone p.passed,.passed{margin:16px 0 0;font-size:1.3rem;font-weight:800;color:#1E9E5A;opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease}
+.cdone p.passed.show,.passed.show{opacity:1;transform:none}
+.board h3{margin:0;font-size:1rem}
+.board .sub{margin:-6px 0 2px;color:var(--muted);font-size:.85rem}
+.brow{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px}
+.bav{width:34px;height:34px;border-radius:50%;overflow:hidden}
+.bav img{width:100%;height:100%;object-fit:cover;display:block}
+.bav .ini{font-size:.9rem}
+.bname{margin-bottom:4px;font-size:.9rem}
+.brow.me .bname{font-weight:700}
+.bbar{height:10px;border-radius:6px;background:var(--line);overflow:hidden}
+.bfill{height:100%;border-radius:6px;background:var(--known);transition:width .6s ease}
+.bpts{min-width:3ch;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.cpoints{font-weight:700;color:var(--ink)!important}
+.counts{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;gap:8px;background:var(--surface);border-top:1px solid var(--line);padding:10px max(14px, calc((100% - 640px) / 2)) calc(10px + env(safe-area-inset-bottom,0px))}
+.count{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.85rem;color:var(--muted)}
+.count strong{display:block;font-size:1.4rem;color:var(--ink)}
+.sheet{position:fixed;z-index:30;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:18px 20px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(calc(100% + 60px));transition:transform .22s ease;box-shadow:0 -8px 30px rgba(0,0,0,.12);max-width:640px;margin:0 auto}
+.sheet.open{transform:none}
+.sheet h2{font:700 1.6rem Literata,Georgia,serif;margin:14px 0 0}
+.sheet p{margin:2px 0 16px;color:var(--muted);font-size:1.05rem}
+.choices{display:flex;gap:8px}
+.choices button{flex:1;font:600 .95rem Figtree,system-ui,sans-serif;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:11px 6px;cursor:pointer}
+.choices button.on{border-color:var(--ink)}
+.choices button.c-new.on{border-color:var(--new)}
+.choices button.c-learning.on{border-color:var(--learn)}
+.choices button.c-known.on{border-color:var(--known)}
+.c-known{color:var(--known)!important}
+.c-learning{color:var(--learn)!important}
+.c-new{color:var(--new)!important}
+.close{position:absolute;top:10px;right:14px;background:none;border:0;font-size:1.6rem;color:var(--muted);cursor:pointer}
+.preview{font-size:.8rem;color:var(--muted);text-align:center;margin-top:36px}
+@media (prefers-reduced-motion:reduce){.sheet,main,.page,.page.open,.drawer,.drawer.open{transition:none}}
+/* ---- Ticket style: thin inner frame, punched notches, dashed perforations ---- */
+.tk{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.tk::after{content:"";position:absolute;inset:7px;border:1px solid var(--line);border-radius:10px;pointer-events:none}
+.tkn{-webkit-mask:radial-gradient(circle var(--nr,11px) at 0 50%,#0000 96%,#000) left/51% 100% no-repeat,radial-gradient(circle var(--nr,11px) at 100% 50%,#0000 96%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle var(--nr,11px) at 0 50%,#0000 96%,#000) left/51% 100% no-repeat,radial-gradient(circle var(--nr,11px) at 100% 50%,#0000 96%,#000) right/51% 100% no-repeat}
+.perf{position:relative;height:0;margin:18px -21px;border-top:2px dashed var(--line);z-index:1}
+.perf::before,.perf::after{content:"";position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.perf::before{left:-11px;clip-path:inset(-2px -2px -2px 11px)}
+.perf::after{right:-11px;clip-path:inset(-2px 11px -2px -2px)}
+.result.tk{padding:22px 20px 18px}
+.result .english{border-left:0;padding-left:0}
+.result .sentence{margin:0}
+.inwrap{display:flex;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;transition:border-color .15s ease}
+.inwrap:focus-within{border-color:var(--flag)}
+.inwrap:focus-within .instub::before,.inwrap:focus-within .instub::after{border-color:var(--flag)}
+.inwrap textarea{flex:1;min-width:0;border:0;border-radius:0 16px 16px 0;background:transparent;padding:16px 50px 16px 16px}
+.inwrap textarea:focus-visible{outline:none}
+.instub{position:relative;flex:none;width:54px;border-right:2px dashed var(--line)}
+.stubflag{position:absolute;inset:0;border-radius:14px 0 0 14px;overflow:hidden}
+.stubflag svg{width:100%;height:100%;display:block}
+.instub::before,.instub::after{content:"";position:absolute;right:-12.5px;width:22px;height:22px;border-radius:50%;background:var(--bg);border:1.5px solid var(--line);z-index:1;transition:border-color .15s ease}
+.instub::before{top:-13.5px;clip-path:inset(11px -2px -2px -2px)}
+.instub::after{bottom:-13.5px;clip-path:inset(-2px -2px 11px -2px)}
+.inwrap .clear,.inwrap .mic{z-index:1}
+.count{position:relative;-webkit-mask:radial-gradient(circle 6px at 0 50%,#0000 96%,#000) left/51% 100% no-repeat,radial-gradient(circle 6px at 100% 50%,#0000 96%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle 6px at 0 50%,#0000 96%,#000) left/51% 100% no-repeat,radial-gradient(circle 6px at 100% 50%,#0000 96%,#000) right/51% 100% no-repeat}
+.counts{background:var(--bg)}
+.strip{flex:1;display:flex;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.strip .count{position:relative;flex:1;-webkit-mask:none;mask:none;border:0;border-radius:0;background:none;padding:10px 14px 11px;color:var(--muted);font-size:.8rem;transition:background .15s ease}
+.strip .count:first-child{border-radius:13px 0 0 13px}
+.strip .count:last-child{border-radius:0 13px 13px 0}
+.strip .count + .count{border-left:2px dashed var(--line)}
+.strip .count + .count::before,.strip .count + .count::after{content:"";position:absolute;left:-12px;width:22px;height:22px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.strip .count + .count::before{top:-12px;clip-path:inset(11px -2px -2px -2px)}
+.strip .count + .count::after{bottom:-12px;clip-path:inset(-2px -2px 11px -2px)}
+.strip .count strong{display:block;margin-bottom:2px;font:700 1.55rem/1.1 Literata,Georgia,serif;color:var(--ink)}
+.strip .count.on{background:var(--bg);color:var(--ink)}
+.msg{position:relative}
+.msg::after{content:"";position:absolute;inset:4px;border:1px dashed var(--line);border-radius:12px;pointer-events:none;opacity:.8}
+.msg.bot::after{border-bottom-left-radius:2px}
+.msg.user::after{border-bottom-right-radius:2px}
+.list:not(.grid){position:relative;border-radius:14px}
+.list:not(.grid)::after{content:"";position:absolute;inset:5px;border:1px solid var(--line);border-radius:10px;pointer-events:none}
+.list:not(.grid) .item{border-top-style:dashed;padding:12px 18px}
+.list.grid .item{position:relative;padding:8px 16px;-webkit-mask:radial-gradient(circle 5px at 0 50%,#0000 96%,#000) left/51% 100% no-repeat,radial-gradient(circle 5px at 100% 50%,#0000 96%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle 5px at 0 50%,#0000 96%,#000) left/51% 100% no-repeat,radial-gradient(circle 5px at 100% 50%,#0000 96%,#000) right/51% 100% no-repeat}
+.setupcard{display:flex;flex-direction:column;gap:22px;padding:22px 20px 20px}
+.setupcard .perf{margin:0 -21px}
+.board.tk{padding:20px 20px 22px;margin-top:4px}
+.board .perf{margin:4px -21px 6px}
+.brow.ranked{grid-template-columns:18px 34px 1fr auto}
+.rank{font:700 1rem Literata,Georgia,serif;color:var(--muted);text-align:center}
+.askbox{position:relative;border:1px solid var(--line)}
+.askbox::after{content:"";position:absolute;inset:7px;border:1px solid var(--line);border-radius:12px;pointer-events:none}
+.askbox .perf{margin:0 -23px 16px}
+.sheetperf{margin:4px -20px 18px}
+.primary{outline:1px dashed rgba(255,255,255,.55);outline-offset:-5px}
+.primary:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.strip .count:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--flag)}
+.strip .count:focus-visible::before,.strip .count:focus-visible::after,.strip .count:focus-visible + .count::before,.strip .count:focus-visible + .count::after{border-color:var(--flag);border-width:2px}
+.list.grid .item:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--flag)}
+.cardwrap:has(.card:focus-visible){filter:drop-shadow(2px 0 0 var(--flag)) drop-shadow(-2px 0 0 var(--flag)) drop-shadow(0 2px 0 var(--flag)) drop-shadow(0 -2px 0 var(--flag))}
+.card:focus-visible{outline:none}
+/* ---- Drawer as a ticket ---- */
+.drawer{border-radius:0 20px 20px 0}
+.drawer::after{content:"";position:absolute;inset:calc(10px + env(safe-area-inset-top,0px)) 10px 10px 10px;border:1px solid var(--line);border-radius:14px;pointer-events:none}
+.drawer h2{margin:4px 14px 6px;font:700 1.6rem Literata,Georgia,serif}
+.drawer .dsub{margin:0 14px 14px;color:var(--muted);font-size:.85rem}
+.drawer .perf{margin:4px -13px 12px}
+.drawer-foot{border-top:0;padding-top:0}
+.mode{position:relative;padding:13px 14px}
+.mode.on{background:var(--bg);-webkit-mask:radial-gradient(circle 7px at 0 50%,#0000 96%,#000) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,#0000 96%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle 7px at 0 50%,#0000 96%,#000) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,#0000 96%,#000) right/51% 100% no-repeat}
+.mode.on::after{content:"";position:absolute;inset:4px 12px;border:1px dashed var(--line);border-radius:8px;pointer-events:none}
+/* ---- Paper grain on the ticket pieces (texture only, no colour) ---- */
+:root{--paper:url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/wAALCAKAAoABAREA/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oACAEBAAA/APqmg9KKQsPpQc4yOaWkxzR3zS4oxikP1paBzzQaO1FA57UUg5OaXtwKKKKTGe9KelJyOe1KKQ88UDiloOKOlJSikNLSdaB0z/OjIz9KOtL7U05BGOnQ0vQ0ZGPal70HikByOfpS4pD70Yopf1oxSHr70etGce9GRS4xSYPrQOOKAc/WlIo4ozRRRRSE460tNHHWnUAUEA/jQeOaTPHQ0tFFJ360tHNFHWiiigiiig0UcUUUhNLSGlpOn40tFAIPNFFFHSkpT0pCaKOv4UtGOaTHalxRQSBSDr0pcUUnBoNHNA780tJ36Uc/hS8UUGkxS0fSjFJnnFL70dKKTFGPQUtIR70e9LRRRTCD1704cjmg80AYpaKPrRSd6XpRRRRSZpaM84ooppPP0NLnijJ/OjFLRSUUYpaTrQcij0pQOKKKM0lApaKTvRil6ijvSZozSiikzR1NL7UnXORQSelAH50dqXtmkHQ5Ipc0UZA49aToKWjrRRRjHSijHekOKWikBpaQE55paKOtFFFFFHrSUA5zSg5pCM0o6Uh5NKc4oxRSUvWiigdsjn0oFFBAPWjApuccfzp3eikJ4opaKKQ8GjPzYxS0nalxRSY5paKT3zSg0hpcijtSZpcUnSjHal7etBo6Cik6DGeaAO9Lmkz096X8KMCg0dBSbvmx7ZzS0UUhz9KXmkPAoHFLmk6ijvRkGjnHvRk0cZoBpaKKKKKKQZzyfpS0mOtIq4AHpTqTHGKXmig0UUUhz2OPXNFKOlFFFHWjFGKTtml6UdKQnBpaM0gGKMc5paDSUcnmjtS9KTPOKXrRSDIpTSD8qOM0tHejg0npS5pM0uMnNJ3pe9GO9IB+lLRTc7eW4p2KQAUZ6cUClpAOc0e+eKXvSZxQOaOvel96Tn0paDSZ9MGmgk9eDTgc0tIfWjtS0UUUUUlLQaB1opKWk5xxSgg9DmiikHWjoaX8KKM0UmOc0UtIfpS0lLQeeKTtjvS44xSdelLRSAc5pcUfhScg9KXmkOe1L7UUdaSjNKKQn2oNA4paKDSEZ4NAGPYUYz3paM0d6KSj2o5z7UHpxQOQM9aDkDOM0UuKTijrS0nWigjHApcUg4NLmiikBpaQ9aXOBmkB4zR3paQfSjHbtS0UUUUm0DPv1paKT3paKKOgopBxRS0nelpKXNJnFBBOKWkzz3NL3opKM9DS0mBiigd6X0oz1oNICT2oA9aPrQaOtGaMmj69KOSc9qAO9L3pM9u9KaTPNLSDnvRnjjrQAcc0tHbikHFFLSZ/GlpB1o5zSEkYx60pP4UfU0tA6UGiiko+lKKKT2FLSEnFKKQgkj5iPpS0mcijPSlopMjJpaO1GKQ0tFBpOgoBo5ooIzS0hPOO9LR3opKWiikx0oI5ziloo7elJS0hJA4GaRV9eadSE8cUA8c0Y45paOBRSUZHrRn1pc4NJnmjAFBxR3x2o6jFAABxigDBPOaO9GTS0gwfSlzSY4paTPt60vakpeDSdqO3NAOc47UtFApMUZ4IJozzgc0tFFFFICGGRzR0paSlopCCRxxS0UUUlLigGkPSlpMc0e2KM0ucCk70vSkz2oxQaWk4oox+dL1opB05oByMilzSHPagHNLikFB9sUvNFJjmloopOmMUUvSikPJpc0UgpfejpR0HFJR0NA9e9FLSHoaO1L0pD05ozx0oBycd6AaD0pc0UUc0gweaO/WloxR3pM4paQUGloopKXmjtRSUUtGaTGaXOKSjPNLRRSZ4pT0pAMUtJS0neilzziiikUck96XpSdetLSAY7UD3ozS8YopPwpaKTjNLxSYAwuDQc5FBoFBzn2o69RQDk5oHIo7/ANKDzR3pe/SkIyKB1paD04pMc5paT3/OjPp9KMA9qAP/AK9BUN1oI4opRRQaQ57UtJ1HtQDntSjqf0oo70h6ilxSZxS0hpaKKKKKKBRSc0Y4o9qUfnSZ9aM5oAOcmj8aUc0mMCjrS9aTp70AUdqM8UvUUcDmmZ596d25paTrS0g/KjPpQOOOtHSjrSkZFGaKQ/jS5pM+oo4Hel70EUmKMUY5ozz0paTPOKM0DOMHrRzn+tHtRn0o5PtRilpOO1HTk9KXNITxk9KM4oIB60D0paKTGKWk6d6Acnj86XNFIME/Sl70Y4opKKXtSdyPajFLn9KSgZ70tFFJnH160fpS0lBOB6fWjOaAKXFJ1o6cUdPpS0UlL9aKQKM5paKQEdBQaWk96WikPWilozSdqDnjFLzScUvbNAx270gPHejOTwaOgoHb1oJFFLSdaMYpe1J0OB1NFGaXNFJ1JyOlIcZyaUD1o70c0YpaQntRjjnmlpDzkDr60BQAKAMZ5PWloo6Un8VL3opM0tFFIc9uaCMjBoNLRRRSHNFGee9LScUAUD0zzQDk0tJ68UtHUUUgHeloozRRRik60tFITjoM0E4paaRmnUh6cdaAe1B6Ud80hBYdSPpS80Uo6UnTmlpuD+NL2pe2TSE8ZpaQ0vWkPtS9ueaQUY4o5FAo60E4XNIO+PrTqTNLSDvQTS0ZoJpKM55oPOfWkAOMEmlJAP1petFHPpRSdKWiiik70HpQKWkJoBo5PFLRSd6Wkpc5pKWk6cUY455oGR9KAeaOvFHQ8c0UZo9s0HBz39qX2pCKAMUUtHXvijpQDmikHp6UvSjtSUUdKM9KPel7/Sjg9KDSUoGKSg8Uhz359KXtRml70nalxSDj6UZ7GgZ9c0p/GkopaTAxiloooo6CkzxmlprcEYp3akzzijvS0hpaMUc5opKXpR2pOnfqaU+lJjijGOaOnFLxSUvaj60mB1oxR0o9KOtApaTFLmkpcUnSl70mecd6XrR0pB0o96WkOKXOKQdetLz9KKMUUgo70DHtRikJxj2pUxjjpRkDrQc47Ugzz70p9qQH5jnFOzRxSHnilpMUH1HejNLSCgflS0CikNGKBg55oye9A70jKGXDDI9KUHPSk3cf0pcc5oxxS9KKKKTiloHFIOBjNFLSdqBz34opaKQUtJS0gOecY+tH8VLRRSE8cUDAyc0hAbBPQcinUYzSEZFKKQ0Z6+1HJwQf0oHHWl60DgUlAFHNKaQc9KKD16UEnig5P1pc0Z5pMknpil6HNJjBpaaRnPH/ANenUnTmgjNB4OaM8cd6M44PWlo/Gk68UE+1Bx3opScEUdqKQ0vSiikwAeBS5ooFIKMc5zS4BpD0470mSBSg0uRQRxSYzjI6UY70D0paQZ6YoNKKKTvigDAxQeKU8UnelpBmjHejA60tGKDQaM9qQnijvS0go4zz9aXvSe1B6il9KTqaWk6CjmlpOaAaDntS0nvS0goPHSijI/KkBJI9KMHdnrS4oGTkGj+dKKQ9eM0o6Unt0ooBpTSdxR9cYoAx3paKKSlFFJ0NLSEZpTmkHFA7mlzn1pAOTRQRmgCjtg0gJ5yOnTHend6KQdaPxopaTFGOP1oXnml7Un0o/Gjv0/GlopO9FKKQdaWk7YopaKSlPFIcY5oPXGDQSKDzSAHOc06k5HbmkPXB/ClwaM84oNLSHAxQfxpetFFJ3pO46e9KPWjpS+1GKQGlPrTd3OApp1FFIevtSD0yad+dIcHHcUfpQTR35o9x3paTpmgcdTS0nXGaOcHFHOOuDS0h9aWkHHvR19qWjiiijvSGign8KOtB6e1ApCeKdSClpDwOhoGcnNLSdBQOQKMHNLR0pBQPWlIzSdR9aDRjHvS9qQc8UuaQcjpig/h9KB0o/Wjvk8UtFBpAfalpKWkJoB/nQfSjFBo6UDnmgjIxS0maKWkHNGOc0d/pR/FS0lGeaCTigjNBGeKOlLR3pO9KKTGetLQKMc0h9BRjIxRgDNLgUUHtimkE4p1FHPNICCAaKXtSUdetA4AGKWkbpQCehpaTHOaWgUAfjR0o60ZpD04oOaB70Ui9acQCOaQccdaWkHtS4oopAeBmg5wQOD2NAzgbsZ9qWk9qDmlo6dTSdD1pTSZxS4ooOaSjqaO/ejNLQKQ0tJg0oopO9AIoOGGPUUe3NHel+tIeBR7cUAcUoo/Cjv0oo696TvQKO9LRSHnIoAx06UvA4pKKThcEnHalPJxjt1o2j60tFFHGaTPalprcd6Bk854NLntScg/jRinCk9aRehzS9KWkziloopMc/SilpAeKXrRSYpaTFGTS9qQjjA4o5A9aCcCgdKBQePxo/pS0lLRSUtFFJn3owN2aO/FISRzjJpRnA6Zo5yOmO9LRSAYpaKKO9ISEBJzQORkUdKDz07UvWjvSdTR2paKKTNGaMZ9eKWk+tHFGaOtBzijHPNGCOlHbmjIo7UYpaT+dLRSHmgcHpS9aTr0oA68UEgEDvSmj60U0/KM9adQelIKWiiikOccUtJmjn0o570d8dKWik96Xg0UUnSgY/HvR6UvSkA5zQOnSlpM0vAoooPNIRS5o5zRzSfzpe3NJQPwpTSYoHHFBoznpSHC/WlJ5xjilxzSdKWjFJmigDnk0uaD7UdaTNGfyo4NIQCR7GnUDjvmkz2zzRnigcig/rRS0GkzSiik9hQKPejmjqaWkxQTS0hGeDS4opBzS0hPpS0HpQB+dFFJS0UmefajPAo7Uc5pTSUtFFGOKQ/8A1qB1+lLikozmgdaCfzpe1AOelFFFJ3zRQBnrRR/OgjigdPSjHTilNJRQPxpaSj6UtIaUUmaKD9OtLik/n2pfwpBxxRnnmlopCOetLSE4paSjvRmj8KO+aWkHIoxQKM84pTzSduKOSaWjNITS/jRSGjPtQGzS9KKaCSeuMUpAPWloopAMZpRSZoFL1pO+aAMd6XNJ0PJpe9JS80gPPSigetB6YoAxRzRjNHSgUvSiijNFJ06UdaOfpS0maWkxil60UUY9aKQe1Ao9KXrSdBzS0lIRyPQU7NH60lGMUcGil6UUcH3pOfXijFAB9+tGcUpIFFFFFHSg0mMilpO9FKeaQYA9qQ+tKelLSAY6mloxSUdQcHmjnHvRigClpMUtFJ9aWkJxQc5FL3opB60dqKDQO3ajPHpQKM0hpeOtKcGk6n2owOlHaj8eKXtSdaMZ5oUYGCc0HjtQTilpBQSRjAz+NLSAUUc5ox2oNHagZzS9KTNHAoH+TQaKPT1paTNLRSA0duKAMZo70tGDRRSHPajFAOaBnpiloNJS+uaMUUnf2paQmjnNFGaBnvS0meaO9LjFFFGaKTnvQOB0oGaWkOKXtSd6Xtmk/KgilHApOh6UvtSAetBPtxQM0fSl70nWlHNJnJ4paTOKAO9HWlpPejGetGMUelHfvS0UUUg5o7UdqU0dKQDAwKWkx056UtFFBGRSUZ+tGaCMnmlo9OaO9FFFNUH5s9c8U6k57UY4paQE4pTRRSGlAxRSGjFHP0paT3xS0mfakzgdKXmj69qWg0Ud6KQilHvRR1opCM0tFBopOtLRSdKAd2cc80UtIBS4opPp0oGc0tFFJQxxzjNH50HgilopM4xS0e1JRz0pe3WkHAoPNFKaQgYowaUUnWl60UgORRjH1pcUUlHWl+lJ70dBQc0fWgelBpRzQaKKM0UUUUnelopKXOKBzTV3ZJIHtS9uKXtSGgDFGKWmkHIOfwpQMUtB6cUnpS0maUUUmaWg80HpSc0tJ2o7c0A0tFFFJkDANBORxQPQ9aWkFHQ0CgCjnFA/yaMZNLSdaWjjp3pMUA57Y7UYoIyMUo4FJ2pelJn8qQk9xRz696dSc+tFLQehpOwNHQ0tJ1paYd2PTNOBPFBzjOKAc0vNJnrQMA+9KaQUdKB9KWkPFB4FHPX1paKQ8DilpM4z3pMnHPWl7gAUtB9aKQ0dsdMUuc0UdKKTnJ44oxS9vWkHPNGeaOg70DmlopCMjFAHNL0pMUEA0tJ055oOe3Sg5Io6Clx+dFJ7UDJ68UD8qWk560vek+najgn3oIpccUh6UDml/CkzxxS0n40ppOKDS5pOvrRijPNLR3pKMAD8aWkY+1A4FLmkA5paTGBxxQaDQOtL+FFGe1Jn8KODSjiikzzil9KQ9DQowKUc0UhzkHt6UZ4o/GlHvR0oo60n0pT0pOlHtS0CkPbFANKaTtxRz9aM8c8UmfxpxopAMUc+lLSEZ4zRgdaWmnnjJBpc8ZNLSUDpzRRzRgHnv0opaQGgHPNHOaWikFLQPek988UtJ1GaAOT+lHSlFBpOlKPekpcUmDkmhueKF9qX2pBjtS0nrS0UUUZoFIxx70AcdKDS0hNBo70HmjOaWig9DRzSUcUtFJ3paMce1AOaKQ9KXNJ1FHbFLSHIpaQGl70lGcfSl6CkGaDzS0nXpR0/wox370tHvSdKWk68GjAHtS0h4oP86KO9LmkpaKKKT8qKTtlaUdOcUA5JoPHQUtAJ70UgNLSHmlopMd6WjHOaSlzSDkUelLRScGlpBkmg+g60hODjHFKvQUuOKKTrS0hpe9JjNLSKMDnrS0Uh60ppBR+NLSHpRRQKKPejv9aUdOaQHPPSjpS96KQ9OaBwcUtJn0ozRx60H8jRzS4ooBpD+NHPagjNHOelHNKOaQ9uKWjtR0o6UgA6jvQTRnPSlpM8cUtFFFFGPSik2jrQBSnHWkpcYoopMjOM8jnFLRRRTTknjpS/hk0tIcfjRjjFCjAo6etLSYpaTrS0UUdaPwopOvFL60gozzS0UUUg6UvFJ9KQNliMHinUnPWlpO9H1oIzQMjtR3oNL1pv6U4dKOaQUp5oFJ3oPHNKKTrQD68UAck+tLSE/jj0paQUppDntQBxzQMdqWkwCQcdKXtRzSA5+lHSl9qDRR2pMjdjvRnvS5FIeOaWjtRRmiij8aQYGcUtJxijOaWjtRSE4oz2paDzSUHmgZxS5pucHGKdRiikoPTpRRRS9qMfjSDPcUEdaBxS0me1L9aTIx1paKQHmjnOaWkyOaOoo70tJkevWgjP40UZ+bAo5z7Ubh60DmlooxScLmkU59Ril6UUE8HFGKDxQAfU0d6M+2aOfSjuaWk74pelFFJ6ZpcA8YpAMUClpOtLSEUtFI3SgUuaTbSiik4BxQeOtAHApaKQUtIx5xRRnnHt1owMYpfwpKO9LRRRR0oJwKKO2aTt6UtIaOvtR3FGOMUCl60lHejOO1HWlpMjgUooA4xRR3o70nWjGBgUY/KlFIenFHIziijp0FHWg5zxSj60ho60tFFGaTnHvRzjn9KWkpcUUlLRSCloooo5oopAKXOKTPGelB5Ge1AJ9KTBPWlwPWlpOoopaKRvWhc4Oce2KXpxRRSdRzS9aKQGgEEcUtBpODzRkHIoxSnkUUmOPegfjRzxS0mKD60D7o6/jR+FAzRzn8KDjGKMDuOtC5xz1ox74paTjvRQOecUtJmjpS0mKWkP1pc0UlBzx3oIAxQxwMijBxwaO9LR1oGKKO1FGKTrS0lLRRSdKUUUUGkprDkHrSqxI5HNOxQKKKSjpS0maOtLjtSc56UtFH1pDknilpMZoIyKQDB5596WgHrS0g6etHXmgcUppF5HcUdaOh6Ue/elpM0vakzS9aSkG7POMUuKXtxRRzmg0UmPQ0vWkAwMYGKXt3pOe1ANL9aDSdT2xS9aSloxRSd6WikHoKWkHFLRQTRmk5NH40tFFFJ0+lLSfTFLRRwetBOBmkBzzQOtKOeaKKTmjnNAGKWkJpc0UgpaKKAaTvSk47UdRRRRSUtHfNH40UhOBk0c0Z46UtJzS0mBj1pNihtwzn2NLz60E80D360tGaTJ5yKM0UDr/KjvQBgcnmjvRxnpSmijHHFISRS4pKX3ozjrRSUv8qTvRuHU0UtFHeikHrS0UnTmlooo70UUUZoNNHHGead1+lFISB1PWjvRjNLijHPWkNLSHmil6UmM0pzjg4pBkAZ60UHkjnpRS0UhOKXvSYyaXNNyc47YpcetHNL2pBSmkNFGKM446mg+tGM/SjHNA60ZpetIQCOQMUdKWk7UvQc0mcH1o4NLQDmkYEkckUetBzQv14pe9HSiiiiikpRRR1oopMEUc+tLRQaKAKKTuKXvSd6XFBGcUnSlHSik68/pSj3ooo70UUUd6KM0lL7UUlGKXGaKDjrSDkUvekyM+lHUHqKWkHXnrQcd+9B74oHTk5pfakx+dGTik9sHijkn2oIGRntTqTPPel6U3Of5U7HFIxxj60i57nNGM0uOPWlApD1oNBPpzRmlxikwfWlHHFIDn60pFHAoz60UUUUhOOtLTRx1p1AFBAP40HjmkzkcA0tFFJ360tB6UUhYfSg5xxzS0mOaB1zS4oxikP1paBzzQaO1FAo9qTqc0v4UetFFJjnk0vak5zmlFNJ3ZBpQMcUtFITjFHagYHFIoHJApQMdTSMM4wQKcOBTT15OBS4zk0ppFHWg4znHNIOnOfxp3X8KM80mfSgfpQaX8KQ/zopaPpSYozzil96OlFJijHoKWkIz3o96WiiimEHr3pw6c0HmgDFLRR9aKTvS0UUUc0UHmiiigiiig0UcUUUhNLSGlpOn40veikB4zS0mM0uaOlIeOR1pc8UhPNHNHXr2paQ+1IqkHrmlIGOaUDFFMz6ZNPpucDBPPsKBn35oxjk5J9KX39aBn1oJpc0ZxxSHge1FKRmiijGOlFHvSHFFLSA5paQE55paKOtFFFFFFJQDnNKDmkIzSik70p6UYooopM0tGecUUU0nn8aXPFGT+dGKWikpaTFLSdaDkUelKBxRSUuaTpQKWgUnG7FGMGl6ijvRkUhbAyOaAece1L1pA3y5PFAO7BoGBwOKMk54IpAvUnvS/TBozk9M0cUuKRuPpQBgUbuce2aD60tFIc/SlFIeBQOKWk6ijHNGQaOQPejmjj86AaWiiiiiikGc8n6UtJjrSKuAB6U4UmOMUvNFBopKWiigdsjB9KB0ooIB60Ypuccfzp3eikPSjFLRRSHrRn5sYpe1J2pcUUmOaWik980oNIQcjFLkUduKTPOBS4pM4wKGGRijkDPWggGl6Ck6n6UEgDHelzQKSilzTeRyadSAUE/rQPrS0gHej3zxS96TOKBzR170vvSc+n5UtBpM+mDTQSfrTgc0tB9aSlooooooozRQOtFFFFBpDnjH40Uo6UUUUdaMUlHbNLRSE4NLRmkHFKBzmig0lA9aKXpSZ5xS9aKQZFBoFGBnNKKM84oyDSZ5Bpc+1Jn8vajFHfIFL9KQjNHQYo680c0veiiko9qOc9sUHpxQOQM9aDwOmaO9Lik4o60tJ1ooIwMClxSDilzzRR60A5opD1pc4FGeM0d6KQfSjHbtS0UUUnOKUEHoc0UUgPNHQ0v4UUZopMc5paKQnjpS0UUHnikPpS9sUnWlopMc5pcUfhScjtS80hz2pfaikIzS0mc8d6BxRntg0UdB6UAUvSk60DkUd6M9u9B9qMmlpBg96M8cdaADjmlo7cUg4o4paTP40tIMZpMHNKTgDHrQfyo/GloooopKM+lLR2pPYUtIc4pRSFSSPmIHtS+lJnIozjFLRSBQCffrS0Ue9FFFHSik6UtFJ3xS0lLSZxQRnFLikzg+tL3ooFJmlpMUZoHel9KM9aQnHegEntSBe55NKMjrR26UdcUZzkelGcdqTHc5xS8Zpc4pM4NHfpRgCgkcGjvijqMUAAcUAYJ5zR70ZpaQYPHHFLkUmP1pe1J+HrS0UcGik7c0Zz0paKKTHpRnAOTQD2HNLRRRRSAhhkcijpS0lLRSAjJpaO1GKKKKKToKPeijrQR70tITzjvS9KKKTmloopMdKCOelLRR29KSl60jEgcDNIq/3uadikJ4wOtA6DNGPWlpOBmg9etGetFHejGKWk6n2pSaKQUvvR0o6Diik6Ggeveil6UhopcYpDjHNGeOlAPOO9ANBxigGloopAB1o70tGKO9J0pe1IKDS0UUUhBI44paKKKKKBSE8UvUUY5pM9sUe9L0FJ3pelJmiloo4FJ7Uc0oopB70A5HFLmkOewoBz+FLikA70H2xS80mfrRgZpaQjNL3pCOxBNHfpR3pRSHOfajr1pAcnPalHIo7/0oIz0o70vfpSEZFA60tIenFGOc0tJ7/nRkc4+lGBRjntQVDdRQRRQKWikIPalpOo9qAfalGcnP4UUUncUuKTOKUUlFLzR2opPpRS0UUmcUUueaKMUUmeKXtSUtJR2oxzmiloopB3pelJ160tIBjpQPejNLxRSe4FLSGjAzS8UhIFLmkJ45o4HelFBFJijFAGDRnnilpM80UDOOetHOeePegHtRnrQcn2oIpR06YpKM45PAoz+FB96CTkcUHBHNA9DzSmikxiijpQDkkClopBgn6Ud6XFFJS0UUUUZopKWkIzRjAo60opBnnigntQoPU9aUUDpSYxRml60nSjFGOKAeKXqKPem5596XtmlpM5paQfTFGelA4OOtHSjrQRkUZ9KWmkcAAU7mk96M8ZpRjt3pAeO9Gcng0dAaB+tBIo6UtJR05paToeMcmjrRmjIPvS0nUnPakOM80oFLSdO9AHvmlpM5oxgcnNLSHnIHWgIAAMUKMZ5PXvS0UdKQ8NS96KTNFL2pO5HtS4oz+lFAooopBxS0Un1oyBz0o6jAoxS4pKPpijpRmlpO1L9aSjAzmlopARRS0nXmlopD1o/lS0UhHFDdKO+aQgsOpB9RS85paB0pOnNLTcHt1p1B4GaQnAyaUUhpeopDS0lGKM0AUp5ppOBnPSgdwO/NOpM0tIKCfSlozSGjvRnPNB5yKQA4wSaUkA49aXrRRz6UUUUhyOnNBGRg0tFJnFLRSHPaj3oz60tFFIOOCeetLmik9eKAOaXqKKAKKTFLmiijHFJnNLRSE46DNBOKWmkZ/wAad1pDnBx1oFKPSg8UHpSUUdOpoz0ox3pc5o60jfn7UDrnNAGKWk6fhSHPf8MUo4HNFL3pKX1pB7UZ7GgdOvNKaTnNLR0pMDFLRRRRSe9LTW4IxTu1JnnFHOaWk6UtFFFFBoopM0UcmjPHNKOaQnBpaQ8Uuc0UZ70ntQAcc80c/hQOtHXijp05ooz1o79aDyD/ACpfakxQBiiloPPfFJ0pc5opOe/FLR7UUgoxzQMH0xRj0oJxj2pFx26UuR3obp2o7UHpQOWPApaKQ80dKB65BoAx0paKQUCloFFIaWkBHrRk9DQOppGUMMMAR6UoOelJu4P16UuOc/lR2xS9KKSg0uKMdaOc+1FFHSg0g+tLSdqPrS9OKKSlopMA0Y6Uvak9KXtSUtJRmlopKXvSZ5xS0dKQdKPelpDjpSk4pAeetLSd8YoJPFByaXNJnnFGST6Ud859qMc0tNxmnUe9IRnpQeDSZz0FL0paQZxQRnigmg0ZpaKKSloopAADwBzS5oopKO+c0uM0h6cd6TOBSg0tFJkUtA4pBxS/jRSHNIOe/FOpKD0oFLRRSA55Ax9aOd1LRRSZoyB1oPOD260tBGc0mOKUc0GkB60YJwQaXpR1oHApKAKOaU0goOe2KWj3opBQeBxjNGaM/jSDJIPalwQc9aMHPFAzzmjrx3pRSEnOBQOlHtS0g+lKaO9J1znFABHeloo9qTtQKWk70tIRk0pzSDjrQKXPHQ0gHJ5ooIzQB1pcigjikxnGR0oxQPSlopOtLRSdSaO3vS0HikxS5o5pMYpaKDSGloPpSE8Ud6WikwO/1paT2oPajNHU0tJ0FHNLSc44oHNHShvx/CloopD7UnfPHvSjnBpelGc0YpAaX3NJu5xg0tFHSkPX2oBGcUdKDzQfypTSd85o9x3paTpmgZHU0tJjOKOxxQM496WkNLSDj3o6+1LRxRSdsUgJ5yOnTHend6KQdfajv1pTRSc5oxx70DpS0Un40d6WijNIf0pRSDrilopODS0UlLSEDHNB6gUZoPNIAc5zTqTn05pDycY+lLg0Z5xQT+NL6UUhNAP86D6UUH2o6UDnmgjcCpoBHbtxRmig8UA5H1pcc0g5P0o70fWlxRSHNBGaWk6YNL680UlKOlJS0UmOaDzwKMZAFBHWlooPamkE4p1FGeaQ0UE/hS0hPHPSgUhNOopMcUH6GilpCcUDkCjHPWlo6UmMnNAHOaXrSdqDR0pe1J1pc0nUdMUdzyPpS9qT9aO+TS0UGkB9qWkI/GlNJnFLRSHPag0YyaO/ejNLRSEUE/nQeKBnvR36UdevGKAf50HkYo7Y5+tHelpD0o570dqUUY9qTPOMUtJyepo6GlFHeiikPORQBj6UvA4o/CkpaOeaQEEA4ope1Hak60DgDilpD0oGehpaMUdaO1AHvmjNJ160p45NITkcUnOPel96WkHWlIB4pMgHHWlpPpS4ozRSA8c0HOCBwe1AzgbsZ9qWk6YFBz+NLR06mk6GgfypaSlopKDR7il45pM+9GBuo6dKQ8c9aXnHUZo5yPSl4oxTce31pwooNFNJCkkml7UdPWg5peopO/alpO1LRRSZozz0oxn8KWk+tHFH0pOF5JA7ClPJxjt1o2jHrS0fSijjNJntR9aDx3o6jIPBoz2o9KKXmkzzQDgGgkdKWiiiikxRR0FGcCgc0tIBS0mKMml7UhHGKMYHrignAoHSgUHjn1paTpQMfj3o6YpelIByTR2FLSE0elLRQaSjvRzmlpP50E8c0fSlFIeaNuPT1oGBwKOOtAIbpSEgc9/Slz2xS0UUYopKAOck0uaD7UdaSjP5UdaDnFGOeaMEUvbmkyKOo9KMUtIP1pc0UnWgfSl60nWgdTxRgcetKaTnFHWg8ClooooFJxS/hSGlpM0Uc96D6dKWik96XrRSd6U0lLRRxmjtSEZ/lQBSkUntjFLnNIOvNG7t3opaPxozR/nmk96M0gB780poz2oIoFBHfFKaSigfjkcUtFJ9KWkNLSZpaQj9aBg0hGcexp1A475pCe2eaM8UCg/rRS0hxxRSjiikPIxS0hPoKOc0daWik9RS54pCMjBoxS0gpaD04ooNH86KKSlopM8+1GeBR2pRSZoFLSd80AY70ufwpOhpe9JmjpQOtAo46+tBoAxRzn2owDR0oFL0oooopKOuc0ZJzxilxSZ5paTGKXGaKKMetFIPagUelLjFJ/kUtIOOKM880tFIeo+tLSE4paP50lFHfFHel7UnUUYwKQAj8BS55xQTR2o5paM4pCaWiikz7UK2aXpRTQck89KUgHrS0UUmMZ96MUAcUopMUY5paSlpCenpQc5peaTr3oHXNA6UUfzoHT/Gg9u1H1paQ0DHWjg9aOtLikoNGeKAaMc5pFBUYJJ5pScdKCcUtIKCSMYGfxpaQCil5zRSZwMmlpKQjkegp1H60ntRjFHBopelFICD70D60YowfXvS0E0UlGOc0tFFJilpD1opSM0nAFIR370p6ZpaQDFLRikxR1zg80c49TS0meaO9LikNL060Zo6UlA4HAoAoHX6UdqUfSk70EgDPYUYoI70tJ0PT60Zz170tIST2GKOaPpS0lKOaTqeKWjOKQDvR1paPekxnrRij0oPXvS0mO1Bo7UDINL0pM0dKO/9aCKKP50tJ+NLRSCg9OKB3o754FLRR+NIaDmgCjr+FICc4xTqDSUtAFFJzmlpDRzmijNAz3paT3xS+9Jn2pM4HT3pTntRgY57UtBooo60h60tBNFJRS8UlLijrSHmlopOlAOenrRS0mKMA0tJ+HFAzmloopKCe4GaU0hpaQfSjrR2o6ilNHSkAwMCj8aMdOelLRRRSUHnqKB06YoxS96T2zRmjFBA70tIuec+tL1pORRjil7UgzSmiikPSlAxRSGjFHP0paTvS0UnajNKKauckkfSnduKO1FNAwaWl6U0g5Bz+FL0pe1Ic7fl60AYwKUmkBpaKQHk0tFGKSlpO1GTjmhTS0UUdaTIGAaDyOKB6Gl7UhIBFLRSZpaPakzR7UvbrSDgUp5pKWkwMUfjSik60tHSk60uKTHNLSUdaWk7UfgaDk0fWgelKcUgIPFKaKKKSlopOlA+lLSHig8Uc9fX1paKQ8dKPbHFGcZpMnHNL/EMYxS0h9fSj8OaU0056DindaQjNL0FJRk59qMd6PxJo680d+tHQd6BS0UhGRigDml6UmPSggGlpM49aDn8KG6cUfrS5xSCgCjnFAP/AOujGTS0h5pcUcZxxn0pMUAk9sUYoI4xS9qSjGKM/lRz6UhPv3pewoo70tIelHalpM0dfel96YQ30zTs4xQc46UA5paTPWgYH1pTSClooz2pM0cUo4opM9qX0pDwCaFGBRnNLSNkYPb0o4ooA/Gl6UUnWl+lJ9aBQeoFLQOlIc8UZpaToOKDn60Z454pAacaKQDFHPTFLSEZ70vHWkPApaKTvjNA59qB+VLSc9aXvSfTtRwT05oIzS4oPSk60v4UmfSlBzSUtJgUGlzSdaAMcUZpaO9IaOAPxpaQ0DilzSAUtJjA44oNBoGc0tGaB700nA9aUDjpQfzpaQ0Ud6OtGc89qWjPbvR60Unejil96KTPzEClHSkxj6UBs9KWkP3aD1o6j0o7YFHWg5H0paQGl70lGcUcUDPeg0tFIc+poJwCT2pfek/OgdOaKMmjAPPfpRS0UgORmjnJpTRRRR9aT3pe9HUUgHNBpaD0pM4pfrSGlxSYOc0EZ4oHtS8dKQYpaT1paKKT0paKTANKKQZNB/DNIeDilXOBmlxR0pOtLSHk0tIRmlxSAYGO9LRSd6WkH5UfjS0h5FBoooo96O/1pR70gOeelHSlooPSkHpS5pOo7ijp60Y796XqKPek6UtJnsaMAe1LSHig9upzS0lLmkpaQ8UtHSkopP4cqOvrS/XFAOSaDx2paQH1paQGlpD2o6UtJjvS0mOc0UuaQciloophyW46CndumaWkP60Y4xQowKOnrRigClpOtLRSUvWkyc9PxooPPFLSCjPNLRRRSDpS8Un0oByxGDxSmkOetLSd6KXFJQOtAOelBOKPx9qCD9DijnFLjvRQDSGjntQRmjv0o5pRzSE9KWjtSdKXpScYyO9BNGc9KWkzxxS9KKSlooxRSbR1xQBSkDrSUvSiikyM4zyOcUtFFH40gxzilpO1AOaWjtRSE46c0Z7UuKTrR3xQeeKFBxRmkLYPTinfSjFFIaDnFFGKP5UvajH40gz3FBHX9aUcUUntS0fjRRSZpe9JjH0paaBj2p1IcnpSijrSAetHegnHNKOlJ1oB9eKAOSfWl4pCfxx6UtAoNIc9qB70oopMAnPpS9BRSA5o/SloIo/GikyN2O9Ge/pS5FJnFLR2oooopG6UDpS5pMUo4FFJwOKDweaUDijpRSClpG64oozk49utGOMUv4UlFLRRRSdKUnAoo7Unb0paKT9BRjpyaCOMUClpO9BHf0ozRuFGeKKWkJGOvXpQRmjNGfmwKOcnpijI9aBzS0UUnC5pFOfUYpelFBPBxRig8d6MHHWjnJoJ9s0vNIDyf50tIOuKXOKKKT60uAeMUgGKBS0nWlpCKXmiikFLnFJnjPSg8jJ6UAn0pME9aXFL7UnUUY9KWikb1oXOCDj2xS9BxRRSdsGjrS0gNAIIyKWg/Wk460ZB4oxSnpRSdvegUZ6UueKBSZ9aB0paTnHvRjIpaKQZ7jBpcUUUd80nXNGMCgD8qUUh6cUcjOKWk6dBR1oOc8Uo+tIaOtLzRRRSc4o5xzS0lLiikpaKQUtFFFFFBpKRhyD1oViRyOadigUUUUDiikzR1ox27Uc56UtFFIck8fWlpMZoIyKQDB5596WgHr7UtIOnrR15oHFLSDkUtJ3NLQaOKKOKQDmg+lBPHFH4YoHT3ox70tJRz6UDnnFLSZo6ZpaTFLSUuaKTmg54HWjAGKGOBkUYOODR3paOtAxRiiijFJ1pelJS0UUnalFFH0xRRRwetBOBmkBzQKUc80UUnNHOaAMUtITS5opBS0UUA0nelJx2o6iiiijFFFH0oo7UnNGaWikOccUE5oOe1LSc0Z4zjNKKKTvS+1IB70vWkHpS44pOe1ANLQfWk6ntS9aSloxRSd6WikHtS0g4paKCaTNHJo/GlooopOn0pe9FFFGaD2pB6Z5pev0opCQOpo70YzS4oxz1oNFIeaKXpSYzSnOODikGQBnrR9KDyRz0opaM0hOKXvRRmkNLQKKSjOTQelHbil4pD05oPfrRmjIzigDnrzS0UhOOaM56c0tJ3o70Cj86OM9OaU0UY4wKQkilpKX3ozjrRRR/Kk74o3DvRS0UnelpB60tFIfWlooopO4pe9B60YoIzik6Uo6UUnXn9KUe9FFHeiiijvRRmkopaSjFLiig46mgUZpMAUEZBFLSA80daWijI6Ug6Uo4pCeM0fSikYE9Dj1peh96Mgn6Up6daTCsOmaOnajvxilpOg5o6UvWj1oBzTWBJGCQKX1oOaF/Sl70UUUUUUlKKKOtFFJgjvRz60tFBooAr//Z");--paperblend:multiply}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--paper:url("data:image/jpeg;base64,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SiiiiiilGaSlpKKKKKKKKKUc0UfWiiiijPFFFJS0UnailopKWk6UtJR3oopaSilNJRRRS0lLRRSUUtFJS0UUUUd6Slo70dKKKKKOwoopKKWkooooopaSiiiiiiiiil+lHNFFFFB44pKKKKXqaPpRSGilpKKKWkpaSlpKKWjFIaKXtSUUUUtFGKSlxRRSUvWijtmikpaSjtRS0UlLSUUUUUUUUUtJRQKKKKKKKKKKKUUe1HeikoooooopaM0UlFLSUUtFFJRRS0lFFFFLRSZoopaKKKKSiilxR0o+tFFFJS9aSilpKXpRRiikooooooooooooooooooopRRiikope1JS0daKKSiiiiiilpKWiikoopaSiiilpKWikFLRRRRRSdKKU0lFFLR2pKKWiikooopaSiiiiiiiiiiiiiiiiiiiilNB+lFFHWkoooopaSiiiil/DikoFKaSilpKKKBRRRRRRS96Sl+lAHWjNBoooo60ntRS0UUUUlFKaSlpKDRRRRRRRRRRRRRRRRRRRRRRRS0lLSUtJSj0pKKKKKKKKKKKKKKMUtJRRRQaKKX3opKKKUUA4zxRRSUtJS9KKM0UdaQ0tAo70fhmgnNJS0lFFFFFFFGKKKKKKWikooor/2Q==");--paperblend:screen}}
+:root[data-theme="dark"]{--paper:url("data:image/jpeg;base64,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SiiiiiilGaSlpKKKKKKKKKUc0UfWiiiijPFFFJS0UnailopKWk6UtJR3oopaSilNJRRRS0lLRRSUUtFJS0UUUUd6Slo70dKKKKKOwoopKKWkooooopaSiiiiiiiiil+lHNFFFFB44pKKKKXqaPpRSGilpKKKWkpaSlpKKWjFIaKXtSUUUUtFGKSlxRRSUvWijtmikpaSjtRS0UlLSUUUUUUUUUtJRQKKKKKKKKKKKUUe1HeikoooooopaM0UlFLSUUtFFJRRS0lFFFFLRSZoopaKKKKSiilxR0o+tFFFJS9aSilpKXpRRiikooooooooooooooooooopRRiikope1JS0daKKSiiiiiilpKWiikoopaSiiilpKWikFLRRRRRSdKKU0lFFLR2pKKWiikooopaSiiiiiiiiiiiiiiiiiiiilNB+lFFHWkoooopaSiiiil/DikoFKaSilpKKKBRRRRRRS96Sl+lAHWjNBoooo60ntRS0UUUUlFKaSlpKDRRRRRRRRRRRRRRRRRRRRRRRS0lLSUtJSj0pKKKKKKKKKKKKKKMUtJRRRQaKKX3opKKKUUA4zxRRSUtJS9KKM0UdaQ0tAo70fhmgnNJS0lFFFFFFFGKKKKKKWikooor/2Q==");--paperblend:screen}
+.card,.tk,.strip,.inwrap,.msg,.sheet,.askbox,.drawer,.list:not(.grid),.list.grid .item,.count.on,.mode.on{background-image:var(--paper),var(--paper);background-size:240px,173px;background-position:0 0,61px 97px;background-blend-mode:var(--paperblend)}
+.drawer .perf::before,.drawer .perf::after{background:color-mix(in srgb,var(--bg) 65%,#000)}
+</style>
 </head>
 <body>
-  <iframe src="https://script.google.com/macros/s/AKfycbw64qzpTXmX3Gsf0C5C9WDLWRRnRir6QJORf2Lf4wcH_a8Xp2sNUQy_vDDMLSec9pM/exec" allow="autoplay; camera; microphone"></iframe>
+<main>
+  <header>
+    <div class="left">
+      <button class="menubtn" id="menubtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="brand"><span class="flag" aria-hidden="true"></span>Ordbog</div>
+    </div>
+    <button class="avatar" id="me" aria-label="Switch profile"></button>
+  </header>
+
+  <section id="v-translate">
+  <div class="inwrap">
+    <div class="instub" id="instub" aria-hidden="true"></div>
+    <textarea id="input" placeholder="Skriv en sætning på dansk…" aria-label="Danish text"></textarea>
+    <button class="clear" id="clear" aria-label="Clear text" hidden>×</button>
+    <button class="mic" id="mic" aria-label="Speak in Danish" title="Speak"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button>
+  </div>
+  <p class="micmsg" id="micmsg" hidden></p>
+  <div class="row bar">
+    <button class="ghost" id="sugg" aria-expanded="false" aria-controls="examples">Suggestions</button>
+    <div class="gogroup">
+      <button class="ghost swap" id="swap"></button>
+      <button class="primary" id="go">Translate</button>
+    </div>
+  </div>
+  <div class="examples" id="examples" hidden></div>
+
+  <section class="result tk" id="result" hidden>
+    <p class="fixnote" id="fixnote" hidden></p>
+    <div class="sentrow">
+      <p class="sentence" id="sentence"></p>
+      <button class="speak-sm" id="speakS" aria-label="Hear the sentence" title="Hear it"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+    </div>
+    <div class="perf" aria-hidden="true"></div>
+    <p class="english" id="english"></p>
+    <p class="hint">Tap a word to change it</p>
+  </section>
+
+  </section>
+
+  <section id="v-chat" hidden>
+    <div class="chathead">
+      <div class="levels" role="group" aria-label="Difficulty">
+        <button data-l="easy">Easy</button>
+        <button data-l="medium">Medium</button>
+        <button data-l="hard">Hard</button>
+      </div>
+      <button class="ghost" id="newchat">New chat</button>
+    </div>
+    <p class="chatnote" id="chatnote" hidden>Preview: these replies are scripted and don’t read what you write. In the real app, Gemini answers what you actually say.</p>
+    <div class="log" id="log" aria-live="polite"></div>
+    <div class="composer">
+      <textarea id="chatin" rows="1" placeholder="Svar på dansk…" aria-label="Your reply in Danish"></textarea>
+      <button class="primary send" id="send">Send</button>
+    </div>
+  </section>
+
+  <section id="v-cards" hidden>
+    <div class="csetup" id="csetup">
+      <div class="tk setupcard">
+      <h2>Cards</h2>
+      <div class="optgroup">
+        <span class="optlbl">Direction</span>
+        <div class="dirrow">
+          <button class="ghost swap bigswap" id="cdirbtn"></button>
+        </div>
+      </div>
+      <div class="optgroup">
+        <span class="optlbl">Cards per round</span>
+        <div class="seg" id="optsize" role="group" aria-label="Cards per round">
+          <button data-v="7">7</button>
+          <button data-v="15">15</button>
+          <button data-v="20">20</button>
+        </div>
+      </div>
+      <p class="csetnote" id="csetnote"></p>
+      <div class="perf" aria-hidden="true"></div>
+      <button class="primary cstart" id="cstart">Start</button>
+      </div>
+      <div class="board tk" id="board"></div>
+    </div>
+    <div class="cplay" id="cplay" hidden>
+      <div class="cardshead">
+        <button class="ghost" id="csetupbtn">Leave round</button>
+        <span class="cprog" id="cprog"></span>
+      </div>
+      <div class="cardzone" id="cardzone"></div>
+      <div class="cardbtns" id="cardbtns">
+        <button class="cbtn miss" id="cmiss" aria-label="Missed it"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button class="cbtn hit" id="chit" aria-label="Got it"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+      </div>
+      <p class="hint" id="chint">Tap the card to see the answer. Swipe right if you got it, left if you didn’t.</p>
+    </div>
+  </section>
+
+  <p class="preview" id="mode"></p>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<nav class="drawer" id="drawer" aria-label="Modes" aria-hidden="true">
+  <h2>Ordbog</h2>
+  <p class="dsub">Choose how you want to practise</p>
+  <div class="perf" aria-hidden="true"></div>
+  <button class="mode on" data-mode="translate"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h9M8.5 3v2M6 5c0 4 3 7 6 8M11 5c-1 4-4 7-7 8"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg>Translate</button>
+  <button class="mode" data-mode="chat"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h13v9H8l-4 3v-3H3z"/><path d="M16 8h5v9h-1v3l-3-3h-6v-4"/></svg>Conversation</button>
+  <button class="mode" data-mode="cards"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v12a2 2 0 0 0 2 2h10"/></svg>Cards</button>
+  <div class="drawer-foot">
+    <div class="perf" aria-hidden="true"></div>
+    <button class="mode" id="wordsbtn"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v15H5.5A1.5 1.5 0 0 0 4 19.5z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H19v-3"/><path d="M8 7h7M8 10.5h5"/></svg>My words</button>
+    <button class="mode" id="soundbtn"></button>
+  </div>
+</nav>
+
+<section class="page" id="page" aria-hidden="true">
+  <div class="pagebar">
+    <button class="back" id="back" aria-label="Back">‹ Back</button>
+    <h2 id="ptitle"></h2>
+    <div class="toggle" role="group" aria-label="View">
+      <button data-v="list" aria-label="List view" title="List"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
+      <button data-v="grid" aria-label="Gallery view" title="Gallery"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></button>
+    </div>
+  </div>
+  <div class="page-inner">
+    <div class="list" id="list"></div>
+  </div>
+</section>
+
+<nav class="counts" id="counts" aria-label="Your words"></nav>
+
+<div class="glow g-right" id="glowR" aria-hidden="true"></div>
+<div class="glow g-left" id="glowL" aria-hidden="true"></div>
+<div class="sparks" id="sparks" aria-hidden="true"></div>
+
+<div class="ask" id="ask" role="dialog" aria-modal="true" aria-labelledby="askq" hidden>
+  <div class="askbox">
+    <div class="askword" id="askword"></div>
+    <div class="asktr" id="asktr"></div>
+    <div class="perf" aria-hidden="true"></div>
+    <p id="askq"></p>
+    <div class="whobar">
+      <button class="ghost" id="askno">Not yet</button>
+      <button class="primary" id="askyes">Mark as known</button>
+    </div>
+  </div>
+</div>
+
+<div class="who" id="who" role="dialog" aria-modal="true" aria-labelledby="whoT" hidden>
+  <h2 id="whoT">Who’s learning?</h2>
+  <div class="faces" id="faces"></div>
+  <div class="addrow" id="addrow" hidden>
+    <input id="newname" placeholder="Name" maxlength="20" aria-label="New profile name">
+    <button class="primary" id="addok">Add</button>
+  </div>
+  <div class="editor" id="editor" hidden>
+    <button class="pic big" id="edpic" aria-label="Change picture"></button>
+    <button class="ghost" id="edpicbtn">Change picture</button>
+    <input id="edname" maxlength="20" aria-label="Name">
+    <div class="whobar">
+      <button class="ghost" id="edcancel">Cancel</button>
+      <button class="primary" id="edsave">Save</button>
+    </div>
+  </div>
+  <div class="whobar" id="whobar">
+    <button class="ghost" id="editp">Edit profiles</button>
+    <button class="ghost" id="whoclose">Done</button>
+  </div>
+  <input type="file" id="file" accept="image/*" hidden>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sw">
+  <button class="close" id="close" aria-label="Close">×</button>
+  <button class="speak" id="speak" aria-label="Hear the word" title="Hear it"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+  <h2 id="sw"></h2>
+  <p id="st"></p>
+  <div class="perf sheetperf" aria-hidden="true"></div>
+  <div class="choices">
+    <button data-s="new" class="c-new">New</button>
+    <button data-s="learning" class="c-learning"><span class="peeps" id="peeps-learning"></span>Learning</button>
+    <button data-s="known" class="c-known"><span class="peeps" id="peeps-known"></span>Known</button>
+  </div>
+</div>
+
+<script>
+const LIVE = typeof google !== 'undefined' && google.script && google.script.run;
+const LEARN_AFTER = 3; // a word turns yellow the 3rd time you write it
+
+// ---- Preview-only fake data (ignored when running inside Apps Script) ----
+const DICT = {jeg:'I',er:'am',du:'you',har:'have',en:'a',et:'a',hund:'dog',kat:'cat',kan:'can',lide:'like',at:'to',spise:'eat',drikke:'drink',drikker:'drink',kaffe:'coffee',
+  hej:'hi',hvordan:'how',det:'it',godt:'well',god:'good',morgen:'morning',tak:'thanks',skal:'shall',have:'have',træt:'tired',i:'in',dag:'day',
+  hedder:'am called',min:'my',bor:'live',københavn:'Copenhagen',lærer:'am learning',dansk:'Danish',og:'and',meget:'very',sjovt:'fun',
+  vi:'we',ses:'see each other',senere:'later',hver:'every',elsker:'love',mad:'food',ven:'friend',
+  hvad:'what',laver:'are doing',lyder:'sounds',hvor:'where',dejlig:'lovely',by:'city',hvorfor:'why',også:'also',eller:'or',goddag:'good day',
+  lavet:'done',weekenden:'the weekend',spændende:'exciting',synes:'think',går:'goes',med:'with',dit:'your',danske:'Danish',indtil:'until',videre:'further',
+  din:'your',yndlingsmad:'favourite food',selv:'yourself',lave:'make',den:'it',hvilken:'which',musik:'music',lytter:'listen',til:'to'};
+const FIXES = {spisse:'spise',kaffee:'kaffe',tret:'træt',kopenhagen:'København',københaven:'København',danks:'dansk',hed:'hedder'};
+const SENTENCES = {
+  'jeg kan lide at spise':'I like to eat',
+  'jeg drikker kaffe hver morgen':'I drink coffee every morning',
+  'hej, jeg hedder anna og jeg bor i københavn':'Hi, my name is Anna and I live in Copenhagen',
+  'jeg lærer dansk og det er meget sjovt':"I'm learning Danish and it's a lot of fun",
+  'jeg er træt i dag':"I'm tired today",
+  'tak skal du have':'Thank you'
+};
+const EXAMPLES = ['Jeg kan lide at spisse','Jeg drikker kaffee hver morgen','Jeg lærer danks og det er meget sjovt'];
+
+function fakeProcess(user, text){
+  const original = text;
+  const corrected = text.replace(/[A-Za-zÆØÅæøå]+/g, w => {
+    const f = FIXES[w.toLowerCase()];
+    if(!f) return w;
+    return w[0] === w[0].toUpperCase() ? f[0].toUpperCase()+f.slice(1) : f;
+  });
+  const key = corrected.toLowerCase().replace(/[.!?]+$/,'').trim();
+  const words = [...new Set((corrected.toLowerCase().match(/[a-zæøå]+/g)||[]))];
+  const wordTr = {}; words.forEach(w => wordTr[w] = DICT[w] || '(no preview translation)');
+  const translation = SENTENCES[key] || words.map(w => DICT[w] || w).join(' ') + '  (rough preview)';
+  const store = load(user);
+  words.forEach(w => {
+    const ex = store[w];
+    if(!ex){ store[w] = {t:wordTr[w], s:'new', n:1}; return; }
+    ex.n = (ex.n || 0) + 1;
+    if(ex.s === 'new' && ex.n === LEARN_AFTER) ex.s = 'learning';
+  });
+  save(user, store);
+  return {original, corrected, translation, wordTr, statuses:store};
+}
+function fakeEnglish(user, text){
+  const clean = s => s.toLowerCase().replace(/’/g, "'").replace(/[.!?]+$/, '').trim();
+  const rev = {}; Object.entries(SENTENCES).forEach(([da, en]) => rev[clean(en)] = da);
+  const revW = {}; Object.entries(DICT).forEach(([da, en]) => { const k = en.toLowerCase(); if(!revW[k]) revW[k] = da; });
+  let danish = rev[clean(text)] || text.split(/\s+/).map(w => revW[w.toLowerCase().replace(/[^a-z']/g, '')] || w).join(' ');
+  danish = danish.charAt(0).toUpperCase() + danish.slice(1);
+  const wordTr = {};
+  [...new Set(danish.toLowerCase().match(/[a-zæøå]+/g) || [])].forEach(w => wordTr[w] = DICT[w] || '(no preview translation)');
+  return { original: text, corrected: danish, translation: text, wordTr, statuses: load(user), dir: 'en' };
+}
+function load(user){ try{ return JSON.parse(localStorage.getItem('dt:'+user)) || {}; }catch(e){ return {}; } }
+function save(user, s){ try{ localStorage.setItem('dt:'+user, JSON.stringify(s)); }catch(e){} }
+
+// ---- Shared UI ----
+const $ = id => document.getElementById(id);
+let state = {statuses:{}, wordTr:{}, current:null, last:null};
+// ---- Profiles ----
+let profiles = [], current = '', editing = false, pickFor = -1;
+const user = () => current;
+const COLORS = ['#C8102E','#17834A','#2F6FB2','#8A4FBF','#C26A12','#1F8C8C'];
+function lsGet(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e) { return d; } }
+function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+function face(p){
+  if(p.img) return `<img src="${p.img}" alt="">`;
+  const c = COLORS[[...p.name].reduce((a, ch) => a + ch.charCodeAt(0), 0) % COLORS.length];
+  return `<span class="ini" style="background:${c}">${esc((p.name[0] || '?').toUpperCase())}</span>`;
+}
+function initProfiles(){
+  const done = list => {
+    const fresh = !(list && list.length);
+    profiles = fresh ? [{name:'Me', img:''}, {name:'Friend', img:''}] : list;
+    if(fresh && LIVE) profiles.forEach(saveProfile);
+    current = lsGet('dt:current', '');
+    if(!profiles.some(p => p.name === current)) current = profiles[0].name;
+    if(!LIVE){
+      // Preview only: pretend friends with some points, so the leaderboard has something to show
+      ['Friend', 'Sofie', 'Mads'].forEach(n => { if(!profiles.some(p => p.name === n)) profiles.push({ name: n, img: '' }); });
+      profiles.forEach(p => { if(p.name !== current && p.points == null) p.points = 3 + Math.floor(Math.random() * 18); });
+      lsSet('dt:profiles', profiles);
+    }
+    renderMe(); loadProfile();
+  };
+  if(LIVE) google.script.run.withSuccessHandler(done).withFailureHandler(() => done([])).getProfiles();
+  else done(lsGet('dt:profiles', []));
+}
+function saveProfile(p){ if(LIVE) google.script.run.saveProfile(p.name, p.img || ''); else lsSet('dt:profiles', profiles); }
+function renderMe(){
+  const p = profiles.find(x => x.name === current);
+  $('me').innerHTML = face(p);
+  $('me').setAttribute('aria-label', `Profile: ${p.name}. Switch profile`);
+}
+function renderFaces(){
+  const cam = '<span class="cam" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></span>';
+  $('faces').innerHTML = profiles.map((p, i) =>
+    `<button class="face${p.name === current ? ' cur' : ''}" data-i="${i}"><span class="pic">${face(p)}${editing ? cam : ''}</span><span class="nm">${esc(p.name)}</span></button>`
+  ).join('') + '<button class="face" id="addp"><span class="pic plus">+</span><span class="nm">Add profile</span></button>';
+  $('faces').querySelectorAll('.face[data-i]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if(editing){ openEditor(i); return; }
+    current = profiles[i].name; lsSet('dt:current', current);
+    renderMe(); loadProfile(); closeWho();
+  });
+  $('addp').onclick = () => { $('addrow').hidden = false; $('newname').focus(); };
+  $('editp').textContent = editing ? 'Stop editing' : 'Edit profiles';
+  $('whoT').textContent = editing ? 'Choose a profile to edit' : 'Who’s learning?';
+}
+function openWho(){ editing = false; editIdx = -1; showMain(true); $('addrow').hidden = true; renderFaces(); $('who').hidden = false; }
+function closeWho(){ $('who').hidden = true; }
+$('me').onclick = openWho;
+$('whoclose').onclick = closeWho;
+$('editp').onclick = () => { editing = !editing; $('addrow').hidden = true; renderFaces(); };
+
+// ---- Edit one profile (picture + name) ----
+let editIdx = -1, edImg = '';
+function showMain(show){ $('faces').hidden = !show; $('whobar').hidden = !show; $('editor').hidden = show; if(!show) $('addrow').hidden = true; }
+function openEditor(i){
+  editIdx = i; edImg = profiles[i].img || '';
+  $('edname').value = profiles[i].name;
+  $('edpic').innerHTML = face(profiles[i]);
+  $('whoT').textContent = 'Edit profile';
+  showMain(false);
+}
+function closeEditor(){ editIdx = -1; showMain(true); renderFaces(); }
+$('edpic').onclick = $('edpicbtn').onclick = () => $('file').click();
+$('edcancel').onclick = closeEditor;
+$('edsave').onclick = () => {
+  const p = profiles[editIdx], name = $('edname').value.trim();
+  if(!name){ $('edname').focus(); return; }
+  if(profiles.some((x, j) => j !== editIdx && x.name.toLowerCase() === name.toLowerCase())){ $('edname').select(); return; }
+  const old = p.name; p.name = name; p.img = edImg;
+  if(old !== name){
+    if(LIVE) google.script.run.renameProfile(old, name, edImg);
+    else {
+      lsSet('dt:' + name, lsGet('dt:' + old, {}));
+      try { localStorage.removeItem('dt:' + old); } catch(e) {}
+      lsSet('dt:profiles', profiles);
+    }
+    if(current === old){ current = name; lsSet('dt:current', current); }
+  } else saveProfile(p);
+  renderMe(); closeEditor();
+};
+function addProfile(){
+  const name = $('newname').value.trim();
+  if(!name) return;
+  if(profiles.some(p => p.name.toLowerCase() === name.toLowerCase())){ $('newname').select(); return; }
+  profiles.push({name, img:''}); saveProfile(profiles[profiles.length - 1]);
+  $('newname').value = ''; $('addrow').hidden = true; renderFaces();
+  pickFor = profiles.length - 1; $('file').click();
+}
+$('addok').onclick = addProfile;
+$('newname').addEventListener('keydown', e => { if(e.key === 'Enter') addProfile(); });
+$('file').onchange = () => {
+  const f = $('file').files[0]; $('file').value = '';
+  if(!f || (pickFor < 0 && editIdx < 0)) return;
+  const r = new FileReader();
+  r.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const S = 160, c = document.createElement('canvas'), m = Math.min(img.width, img.height);
+      c.width = c.height = S;
+      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
+      const url = c.toDataURL('image/jpeg', 0.82);
+      if(editIdx >= 0){ edImg = url; $('edpic').innerHTML = face({name: $('edname').value || '?', img: url}); return; }
+      profiles[pickFor].img = url;
+      saveProfile(profiles[pickFor]); renderFaces(); renderMe();
+    };
+    img.src = r.result;
+  };
+  r.readAsDataURL(f);
+};
+
+// ---- Clear button ----
+function syncClear(){ $('clear').hidden = !$('input').value; }
+$('input').addEventListener('input', syncClear);
+$('clear').onclick = () => { $('input').value = ''; syncClear(); $('input').focus(); };
+
+// ---- Pronunciation (the phone's built-in Danish voice) ----
+const canSpeak = 'speechSynthesis' in window;
+let daVoice = null;
+function pickVoice(){ daVoice = speechSynthesis.getVoices().find(v => /^da/i.test(v.lang)) || null; }
+if(canSpeak){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+$('speak').hidden = !canSpeak;
+$('speakS').hidden = !canSpeak;
+function speak(text, btn){
+  if(!canSpeak || !text) return;
+  const wasPlaying = btn.classList.contains('playing');
+  speechSynthesis.cancel();
+  document.querySelectorAll('.playing').forEach(b => b.classList.remove('playing'));
+  if(wasPlaying) return; // tap again to stop
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'da-DK'; if(daVoice) u.voice = daVoice; u.rate = 0.9;
+  u.onstart = () => btn.classList.add('playing');
+  u.onend = u.onerror = () => btn.classList.remove('playing');
+  speechSynthesis.speak(u);
+}
+$('speak').onclick = () => speak(state.current, $('speak'));
+$('speakS').onclick = () => speak(state.last && state.last.corrected, $('speakS'));
+
+// ---- Speak to type (microphone) ----
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+
+function micMsg(m){ $('micmsg').textContent = m; $('micmsg').hidden = !m; }
+// The mic opens the keyboard so its own dictation can be used:
+// browsers block direct microphone access inside Apps Script's frame.
+$('mic').onclick = () => {
+  const box = $('input'), len = box.value.length;
+  box.focus();
+  try { box.setSelectionRange(len, len); } catch(e) {}
+  micMsg('Tap the microphone on your keyboard and speak. Switch the keyboard to Danish so it understands you.');
+  clearTimeout(window._micT); window._micT = setTimeout(() => micMsg(''), 7000);
+};
+// Direct speech recognition, kept for later (not wired to any button)
+const startRecognition = () => {
+  if(rec){ rec.stop(); return; }
+  micMsg('');
+  const before = $('input').value.trim();
+  const base = before ? before + ' ' : '';
+  rec = new SR();
+  rec.lang = 'da-DK'; rec.interimResults = true; rec.continuous = false;
+  rec.onresult = e => {
+    let t = '';
+    for(const r of e.results) t += r[0].transcript;
+    $('input').value = base + t; syncClear();
+  };
+  rec.onerror = e => {
+    $('mic').classList.remove('live');
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed') micMsg('The microphone is blocked here. Allow it in your browser settings, or use the microphone on your keyboard.');
+    else if(e.error === 'no-speech') micMsg('Nothing was heard. Tap the microphone and try again.');
+    else micMsg('Speech input stopped: ' + e.error);
+  };
+  rec.onend = () => { rec = null; $('mic').classList.remove('live'); };
+  try { rec.start(); $('mic').classList.add('live'); }
+  catch(err){ rec = null; micMsg('Speech input couldn’t start on this device.'); }
+};
+
+$('mode').textContent = LIVE ? '' : 'Preview mode: translations and corrections are fake, and only a handful of words are in the test dictionary.';
+function toggleSugg(show){ $('examples').hidden = !show; $('sugg').setAttribute('aria-expanded', show); }
+$('sugg').onclick = () => toggleSugg($('examples').hidden);
+// ---- Translation direction: 'da' = Danish → English, 'en' = English → Danish ----
+let dir = lsGet('dt:dir', 'da');
+const EX = { da: EXAMPLES, en: ['I drink coffee every morning', 'Hi, my name is Anna and I live in Copenhagen', 'I’m learning Danish and it’s a lot of fun'] };
+// Upright flags that fill the tall stub on the left of the text box
+const STUBFLAG = {
+  da: '<svg viewBox="0 0 54 120" preserveAspectRatio="xMidYMid slice"><rect width="54" height="120" fill="#C8102E"/><rect x="17" width="10" height="120" fill="#fff"/><rect y="48" width="54" height="10" fill="#fff"/></svg>',
+  en: '<svg viewBox="0 0 54 120" preserveAspectRatio="xMidYMid slice"><rect width="54" height="120" fill="#012169"/><path d="M0 0L54 120M54 0L0 120" stroke="#fff" stroke-width="12"/><path d="M0 0L54 120M54 0L0 120" stroke="#C8102E" stroke-width="4"/><path d="M27 0v120M0 60h54" stroke="#fff" stroke-width="18"/><path d="M27 0v120M0 60h54" stroke="#C8102E" stroke-width="10"/></svg>'
+};
+const FLAG = {
+  da: '<span class="fl" aria-hidden="true"><svg viewBox="0 0 37 28"><rect width="37" height="28" fill="#C8102E"/><path d="M14 0v28M0 14h37" stroke="#fff" stroke-width="4"/></svg></span>',
+  en: '<span class="fl" aria-hidden="true"><svg viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0l60 30M60 0L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30M60 0L0 30" stroke="#C8102E" stroke-width="2.4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></svg></span>'
+};
+// The two flags trade places with a little hop when the direction changes
+function swapAnim(btn){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches || !btn.animate) return;
+  const f = btn.querySelectorAll('.fl'), arrow = btn.querySelector('svg.arr');
+  if(f.length < 2) return;
+  const d = f[1].getBoundingClientRect().left - f[0].getBoundingClientRect().left;
+  const ease = { duration: 420, easing: 'cubic-bezier(.3,1.3,.5,1)' };
+  f[0].animate([{ transform: `translate(${d}px,0)` }, { transform: `translate(${d / 2}px,-9px)` }, { transform: 'translate(0,0)' }], ease);
+  f[1].animate([{ transform: `translate(${-d}px,0)` }, { transform: `translate(${-d / 2}px,9px)` }, { transform: 'translate(0,0)' }], ease);
+  if(arrow) arrow.animate([{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.25)', opacity: 1, offset: .7 }, { transform: 'scale(1)' }], ease);
+}
+const SWAP_SVG = '<svg class="arr" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M14 7l5 5-5 5"/></svg>';
+function renderDir(){
+  $('swap').innerHTML = dir === 'da' ? FLAG.da + SWAP_SVG + FLAG.en : FLAG.en + SWAP_SVG + FLAG.da;
+  $('instub').innerHTML = '<span class="stubflag">' + STUBFLAG[dir] + '</span>';
+  $('swap').setAttribute('aria-label', dir === 'da' ? 'Translating Danish to English. Tap to swap.' : 'Translating English to Danish. Tap to swap.');
+  $('input').placeholder = dir === 'da' ? 'Skriv en sætning på dansk…' : 'Write a sentence in English…';
+  $('input').setAttribute('aria-label', dir === 'da' ? 'Danish text' : 'English text');
+  $('examples').innerHTML = EX[dir].map(e => `<button class="try">${e}</button>`).join('');
+  document.querySelectorAll('.try').forEach(b => b.onclick = () => { $('input').value = b.textContent; syncClear(); toggleSugg(false); run(); });
+}
+$('swap').onclick = () => { dir = dir === 'da' ? 'en' : 'da'; lsSet('dt:dir', dir); renderDir(); swapAnim($('swap')); };
+renderDir();
+
+function run(){
+  const text = $('input').value.trim(); if(!text) return;
+  $('go').disabled = true;
+  // Show something straight away: your sentence (in your colours) with the translation still coming
+  state.last = dir === 'en'
+    ? { original: text, corrected: '', translation: text, dir: 'en', pending: true }
+    : { original: text, corrected: text, translation: '', pending: true };
+  render();
+  const done = r => { $('go').disabled = false; $('go').textContent = 'Translate'; state.statuses = r.statuses; state.wordTr = r.wordTr; state.last = r; render(); };
+  if(LIVE){
+    google.script.run.withSuccessHandler(done).withFailureHandler(e => { $('go').disabled=false; $('go').textContent='Translate'; state.last = null; $('result').hidden = true; alert('Translation failed: ' + e.message); })[dir === 'en' ? 'processEnglish' : 'processText'](user(), text);
+  } else setTimeout(() => done(dir === 'en' ? fakeEnglish(user(), text) : fakeProcess(user(), text)), 350);
+}
+
+function render(){
+  renderLog();
+  const r = state.last; if(!r) { renderCounts(); return; }
+  $('result').hidden = false;
+  const norm = s => s.toLowerCase().replace(/\s+/g,' ').trim();
+  const changed = r.dir !== 'en' && norm(r.corrected) !== norm(r.original);
+  $('fixnote').hidden = !changed;
+  if(changed){
+    const ow = r.original.trim().split(/\s+/), cw = r.corrected.trim().split(/\s+/);
+    if(ow.length === cw.length){
+      const diffs = ow.map((o,i) => [o, cw[i]]).filter(([o,c]) => norm(o) !== norm(c));
+      $('fixnote').innerHTML = 'Fixed: ' + diffs.map(([o,c]) => `<s>${esc(o)}</s> → <b>${esc(c)}</b>`).join(', ');
+    } else {
+      $('fixnote').innerHTML = `Corrected from <s>${esc(r.original)}</s>`;
+    }
+  }
+  $('sentence').innerHTML = r.pending && !r.corrected ? '<span class="waiting">Oversætter…</span>' : wordsHTML(r.corrected, changed ? fixedSet(r.original, r.corrected) : null);
+  $('english').textContent = r.translation || 'Translating…';
+  $('english').classList.toggle('waiting', !!r.pending && !r.translation);
+  $('result').classList.toggle('pending', !!r.pending);
+  document.querySelectorAll('.w').forEach(el => { el.onclick = () => open(el.dataset.w); el.onkeydown = e => { if(e.key==='Enter') open(el.dataset.w); }; });
+  renderCounts();
+}
+
+const TITLES = {known:'Known', learning:'Learning', all:'Words used'};
+let view = (() => { try { return localStorage.getItem('dt:view') || 'list'; } catch(e) { return 'list'; } })();
+const pick = f => Object.entries(state.statuses).filter(([,x]) => f === 'all' || x.s === f);
+
+function renderCounts(){
+  const dot = f => f === 'known' ? '<i class="cdot" style="background:var(--known)"></i>' : f === 'learning' ? '<i class="cdot" style="background:var(--learn)"></i>' : '';
+  const btn = (f, label) => `<button class="count${state.filter===f?' on':''}" data-f="${f}"><strong>${pick(f).length}</strong>${dot(f)}${label}</button>`;
+  $('counts').innerHTML = '<div class="strip">' + btn('known','Known') + btn('learning','Learning') + btn('all','Words used') + '</div>';
+  document.querySelectorAll('.count').forEach(b => b.onclick = () => openPage(b.dataset.f));
+  if(state.filter) renderList();
+}
+
+function renderList(){
+  const words = pick(state.filter).sort((a,b) => a[0].localeCompare(b[0], 'da'));
+  $('ptitle').textContent = `${TITLES[state.filter]} (${words.length})`;
+  const list = $('list');
+  list.className = 'list' + (view === 'grid' ? ' grid' : '');
+  list.innerHTML = words.length
+    ? words.map(([w,x]) => `<button class="item" data-w="${esc(w)}"><span class="w ${x.s}">${esc(w)}</span><span class="tr">${esc(x.t||'')}</span></button>`).join('')
+    : '<p class="empty">No words here yet.</p>';
+  list.querySelectorAll('.item').forEach(b => b.onclick = () => open(b.dataset.w));
+  document.querySelectorAll('.toggle button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+  document.querySelectorAll('.filters button').forEach(b => b.classList.toggle('on', b.dataset.f === state.filter));
+}
+document.querySelectorAll('.filters button').forEach(b => b.onclick = () => { state.filter = b.dataset.f; renderCounts(); renderList(); $('page').scrollTop = 0; });
+
+function openPage(f){
+  $('sheet').classList.remove('open');
+  state.filter = f; renderList(); renderCounts();
+  const pg = $('page'); pg.scrollTop = 0; pg.classList.add('open'); pg.setAttribute('aria-hidden','false');
+  document.body.classList.add('paged');
+}
+function closePage(){
+  state.filter = null; renderCounts();
+  const pg = $('page'); pg.classList.remove('open'); pg.setAttribute('aria-hidden','true');
+  document.body.classList.remove('paged');
+}
+$('back').onclick = closePage;
+document.querySelectorAll('.toggle button').forEach(b => b.onclick = () => {
+  view = b.dataset.v; try { localStorage.setItem('dt:view', view); } catch(e) {}
+  renderList();
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && state.filter && !$('sheet').classList.contains('open')) closePage(); });
+
+// Swipe left-to-right on the list page to go back
+(() => {
+  const pg = $('page'); let sx = null, sy = 0, dx = 0, dragging = false;
+  pg.addEventListener('touchstart', e => {
+    if($('sheet').classList.contains('open')) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; dragging = false;
+  }, {passive:true});
+  pg.addEventListener('touchmove', e => {
+    if(sx === null) return;
+    const mx = e.touches[0].clientX - sx, my = e.touches[0].clientY - sy;
+    if(!dragging){
+      if(mx > 12 && mx > Math.abs(my) * 1.5) dragging = true;
+      else if(Math.abs(my) > 12 || mx < -12){ sx = null; return; }
+    }
+    if(dragging){ dx = Math.max(0, mx); pg.style.transition = 'none'; pg.style.transform = `translateX(${dx}px)`; }
+  }, {passive:true});
+  pg.addEventListener('touchend', () => {
+    if(dragging){
+      pg.style.transition = ''; pg.style.transform = '';
+      if(dx > window.innerWidth * 0.25) closePage();
+    }
+    sx = null; dragging = false;
+  });
+})();
+
+function open(w){
+  state.current = w;
+  const s = (state.statuses[w]||{}).s || 'new';
+  $('sw').textContent = w;
+  $('st').textContent = state.wordTr[w] || (state.statuses[w]||{}).t || '';
+  document.querySelectorAll('.choices button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+  $('sheet').classList.add('open');
+  loadPeeps(w);
+}
+// Friends' pictures above Learning / Known for the word you tapped (never yours)
+function renderPeeps(data){
+  ['known', 'learning'].forEach(k => {
+    const names = data ? data[k] : [];
+    $('peeps-' + k).innerHTML = names.map(n => {
+      const p = profiles.find(x => x.name === n) || { name: n, img: '' };
+      return `<span class="peep" title="${esc(n)}">${face(p)}</span>`;
+    }).join('');
+  });
+  document.querySelector('.choices').classList.toggle('haspeeps', !!data && (data.known.length + data.learning.length > 0));
+}
+function loadPeeps(w){
+  renderPeeps(null);
+  if(LIVE) google.script.run.withSuccessHandler(r => { if(state.current === w) renderPeeps(r); }).wordFriends(user(), w);
+  else {
+    // Preview only: friends get a random status for each word, so there's always someone to show
+    const r = { known: [], learning: [] };
+    const others = profiles.filter(p => p.name !== current);
+    others.forEach(p => { const pick = ['known', 'learning', 'known', 'learning', null][Math.floor(Math.random() * 5)]; if(pick) r[pick].push(p.name); });
+    if(!r.known.length && !r.learning.length && others.length) r[Math.random() < .5 ? 'known' : 'learning'].push(others[0].name);
+    renderPeeps(r);
+  }
+}
+$('close').onclick = () => $('sheet').classList.remove('open');
+function setWordStatus(w, s){
+  const t = state.wordTr[w] || (state.statuses[w] || {}).t || '';
+  state.statuses[w] = {...state.statuses[w], t, s};
+  if(LIVE) google.script.run.setStatus(user(), w, s, t);
+  else save(user(), state.statuses);
+}
+document.querySelectorAll('.choices button').forEach(b => b.onclick = () => {
+  setWordStatus(state.current, b.dataset.s);
+  $('sheet').classList.remove('open');
+  render();
+});
+
+function loadProfile(){
+  chat.msgs = []; renderLog(); if(mode === 'chat') sendChat('');
+  state.last = null; $('result').hidden = true;
+  if(LIVE) google.script.run.withSuccessHandler(s => { state.statuses = s; renderCounts(); if(mode === 'cards') startCards(); }).getWords(user());
+  else { state.statuses = load(user()); renderCounts(); if(mode === 'cards') startCards(); }
+}
+$('go').onclick = run;
+$('input').addEventListener('keydown', e => { if(e.key==='Enter' && (e.metaKey||e.ctrlKey)) run(); });
+function esc(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// ---- Coloured words (shared) ----
+function wordsHTML(text, fixed){
+  return String(text || '').split(/([A-Za-zÆØÅæøå]+)/).map((part, i) => {
+    if(i % 2 === 0) return esc(part);
+    const k = part.toLowerCase(), s = (state.statuses[k] || {}).s || 'new';
+    const f = fixed && fixed.has(k) ? ' fixed' : '';
+    return `<span class="w ${s}${f}" data-w="${esc(k)}" tabindex="0" role="button">${esc(part)}</span>`;
+  }).join('');
+}
+function fixNote(orig, corr){
+  const norm = s => s.toLowerCase().replace(/\s+/g, ' ').trim();
+  if(norm(orig) === norm(corr)) return '';
+  const ow = orig.trim().split(/\s+/), cw = corr.trim().split(/\s+/);
+  if(ow.length !== cw.length) return `Corrected from <s>${esc(orig)}</s>`;
+  return 'Fixed: ' + ow.map((o, i) => [o, cw[i]]).filter(([o, c]) => norm(o) !== norm(c))
+    .map(([o, c]) => `<s>${esc(o)}</s> → <b>${esc(c)}</b>`).join(', ');
+}
+function fixedSet(orig, corr){
+  const o = new Set(orig.toLowerCase().match(/[a-zæøå]+/g) || []);
+  return new Set((corr.toLowerCase().match(/[a-zæøå]+/g) || []).filter(w => !o.has(w)));
+}
+
+// ---- Menu & modes ----
+let mode = 'translate';
+function setMenu(open){
+  $('drawer').classList.toggle('open', open);
+  $('drawer').setAttribute('aria-hidden', !open);
+  $('scrim').hidden = !open;
+  $('menubtn').setAttribute('aria-expanded', open);
+}
+$('menubtn').onclick = () => setMenu(true);
+$('scrim').onclick = () => setMenu(false);
+document.addEventListener('keydown', e => { if(e.key === 'Escape') setMenu(false); });
+function setMode(m){
+  mode = m;
+  $('sheet').classList.remove('open');
+  $('v-translate').hidden = m !== 'translate';
+  $('v-chat').hidden = m !== 'chat';
+  $('v-cards').hidden = m !== 'cards';
+  document.body.classList.toggle('chatmode', m === 'chat');
+  document.body.classList.toggle('cardsmode', m === 'cards');
+  document.querySelectorAll('.mode[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+  setMenu(false);
+  if(m === 'chat' && !chat.msgs.length) sendChat('');
+  if(m === 'cards') startCards();
+}
+document.querySelectorAll('.mode[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+$('wordsbtn').onclick = () => { setMenu(false); openPage('all'); };
+
+// ---- Conversation mode ----
+const FAKE_BOT = {
+  easy: [
+    ['Hej! Hvordan har du det i dag?', 'Hi! How are you today?'],
+    ['Det er godt. Kan du lide kaffe?', 'That’s good. Do you like coffee?'],
+    ['Jeg kan også lide kaffe. Har du en hund eller en kat?', 'I like coffee too. Do you have a dog or a cat?'],
+    ['Hvad kan du lide at spise?', 'What do you like to eat?']
+  ],
+  medium: [
+    ['Hej! Hvad laver du i dag?', 'Hi! What are you doing today?'],
+    ['Det lyder sjovt. Hvor bor du?', 'That sounds fun. Where do you live?'],
+    ['København er en dejlig by. Hvorfor lærer du dansk?', 'Copenhagen is a lovely city. Why are you learning Danish?'],
+    ['Hvilken musik lytter du til?', 'What music do you listen to?']
+  ],
+  hard: [
+    ['Goddag! Hvad har du lavet i weekenden?', 'Good day! What did you do at the weekend?'],
+    ['Spændende! Hvordan synes du, det går med dit danske indtil videre?', 'Exciting! How do you think your Danish is going so far?'],
+    ['Hvad er din yndlingsmad, og kan du selv lave den?', 'What’s your favourite food, and can you make it yourself?']
+  ]
+};
+function fakeChat(u, text, hist, level){
+  const mine = text ? fakeProcess(u, text) : null;
+  const list = FAKE_BOT[level] || FAKE_BOT.easy;
+  const [reply, english] = list[hist.filter(m => m.role === 'bot').length % list.length];
+  const glossary = {};
+  (reply.toLowerCase().match(/[a-zæøå]+/g) || []).forEach(w => glossary[w] = DICT[w] || '(no preview translation)');
+  return { mine, bot: { reply, english, glossary }, statuses: load(u) };
+}
+
+const chat = { level: lsGet('dt:level', 'easy'), msgs: [], busy: false, reqId: 0, timer: null };
+const SPEAK_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const chatHistory = () => chat.msgs.filter(m => !m.pending && !m.error).map(m => ({ role: m.role, text: m.text }));
+function renderLevels(){ document.querySelectorAll('.levels button').forEach(b => b.classList.toggle('on', b.dataset.l === chat.level)); }
+document.querySelectorAll('.levels button').forEach(b => b.onclick = () => { chat.level = b.dataset.l; lsSet('dt:level', chat.level); renderLevels(); });
+renderLevels();
+$('chatnote').hidden = !!LIVE;
+
+function renderLog(){
+  $('log').innerHTML = chat.msgs.map((m, i) => {
+    if(m.pending) return '<div class="msg bot pending"><p class="da">Skriver…</p></div>';
+    if(m.error) return `<div class="msg bot error"><p>${esc(m.error)}</p></div>`;
+    if(m.role === 'user'){
+      const note = fixNote(m.orig || m.text, m.text);
+      return `<div class="msg user"><p class="da">${wordsHTML(m.text, fixedSet(m.orig || m.text, m.text))}</p>${note ? `<p class="fixline">${note}</p>` : ''}</div>`;
+    }
+    return `<div class="msg bot"><p class="da">${wordsHTML(m.text)}</p>`
+      + `<div class="tools">${canSpeak ? `<button class="speak-sm" data-say="${i}" aria-label="Hear it">${SPEAK_SVG}</button>` : ''}`
+      + `<button class="eng" data-en="${i}">${m.showEn ? 'Hide English' : 'Show English'}</button></div>`
+      + (m.showEn ? `<p class="en">${esc(m.en || '')}</p>` : '') + '</div>';
+  }).join('');
+}
+$('log').onclick = e => {
+  const w = e.target.closest('.w'); if(w){ open(w.dataset.w); return; }
+  const s = e.target.closest('[data-say]'); if(s){ speak(chat.msgs[+s.dataset.say].text, s); return; }
+  const en = e.target.closest('[data-en]'); if(en){ const m = chat.msgs[+en.dataset.en]; m.showEn = !m.showEn; renderLog(); }
+};
+const scrollEnd = () => { const l = $('log'); l.scrollTop = l.scrollHeight; };
+
+function sendChat(text){
+  if(chat.busy) return;
+  chat.busy = true; $('send').disabled = true;
+  const id = ++chat.reqId;
+  const hist = chatHistory();
+  if(text) chat.msgs.push({ role: 'user', text, orig: text, tmp: true });
+  chat.msgs.push({ role: 'bot', pending: true });
+  renderLog(); scrollEnd();
+  const finish = () => { clearTimeout(chat.timer); chat.busy = false; $('send').disabled = false; renderLog(); renderCounts(); scrollEnd(); };
+  const fail = err => {
+    if(id !== chat.reqId) return;
+    chat.reqId++;
+    chat.msgs = chat.msgs.filter(m => !m.pending && !m.tmp);
+    chat.msgs.push({ role: 'bot', error: 'No reply: ' + ((err && err.message) || err) });
+    if(text) $('chatin').value = text;
+    finish();
+  };
+  const done = r => {
+    if(id !== chat.reqId) return;
+    try {
+      if(!r || !r.bot || !r.bot.reply) throw new Error('The script sent back an empty answer. Try again.');
+      chat.msgs = chat.msgs.filter(m => !m.pending);
+      if(r.mine){
+        const u = chat.msgs[chat.msgs.length - 1];
+        u.text = r.mine.corrected; u.orig = r.mine.original; delete u.tmp;
+        Object.assign(state.wordTr, r.mine.wordTr);
+      }
+      state.statuses = r.statuses || state.statuses;
+      Object.assign(state.wordTr, r.bot.glossary || {});
+      chat.msgs.push({ role: 'bot', text: r.bot.reply, en: r.bot.english });
+      finish();
+    } catch(e) { fail(e); }
+  };
+  clearTimeout(chat.timer);
+  chat.timer = setTimeout(() => fail(new Error('This is taking too long. Send your message again.')), 60000);
+  if(LIVE) google.script.run.withSuccessHandler(done).withFailureHandler(fail).chatTurn(user(), text, hist, chat.level);
+  else setTimeout(() => done(fakeChat(user(), text, hist, chat.level)), 600);
+}
+function growChat(){ const t = $('chatin'); t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 140) + 'px'; }
+function submitChat(){
+  const t = $('chatin').value.trim();
+  if(!t || chat.busy) return;
+  $('chatin').value = ''; growChat(); sendChat(t);
+}
+$('send').onclick = submitChat;
+$('chatin').addEventListener('input', growChat);
+$('chatin').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)){ e.preventDefault(); submitChat(); } });
+$('newchat').onclick = () => {
+  chat.reqId++; clearTimeout(chat.timer);
+  chat.busy = false; $('send').disabled = false;
+  chat.msgs = []; renderLog(); sendChat('');
+};
+
+// ---- Cards mode (only words in Learning) ----
+const cards = { dir: lsGet('dt:cdir', 'da'), size: lsGet('dt:csize', 7), deck: [], i: 0, right: 0, wrong: 0, demo: false, busy: false };
+const ASK_EVERY = 3; // offer to mark a word as known after this many right answers in a row
+function learningWords(){
+  return Object.entries(state.statuses).filter(([, x]) => x.s === 'learning')
+    .map(([w, x]) => ({ w, t: x.t || state.wordTr[w] || '', g: x.g || 0 }));
+}
+function cardPool(){
+  let pool = learningWords();
+  cards.demo = false;
+  if(!pool.length && !LIVE){ pool = ['hej','kaffe','hund','morgen','spise','træt'].map(w => ({ w, t: DICT[w], g: 0 })); cards.demo = true; }
+  return pool;
+}
+function startCards(){ showSetup(); }
+function showSetup(){
+  $('csetup').hidden = false; $('cplay').hidden = true;
+  $('cdirbtn').innerHTML = cards.dir === 'da' ? FLAG.da + SWAP_SVG + FLAG.en : FLAG.en + SWAP_SVG + FLAG.da;
+  $('cdirbtn').setAttribute('aria-label', cards.dir === 'da' ? 'Showing Danish, guess the English. Tap to switch.' : 'Showing English, guess the Danish. Tap to switch.');
+  document.querySelectorAll('#optsize button').forEach(b => b.classList.toggle('on', +b.dataset.v === cards.size));
+  const n = cardPool().length;
+  let note;
+  if(!n) note = 'No words in Learning yet. A word turns yellow the third time you write it, or you can tap any word and choose Learning.';
+  else if(cards.demo) note = 'Preview: you’ll play with six sample words.';
+  else if(n < cards.size) note = `You have ${n} word${n === 1 ? '' : 's'} in Learning, so this round will have ${n} card${n === 1 ? '' : 's'}.`;
+  else note = `You have ${n} words in Learning. Each round picks ${cards.size} at random.`;
+  $('csetnote').textContent = note;
+  $('cstart').disabled = !n;
+  renderBoard();
+  if(LIVE) google.script.run.withSuccessHandler(list => {
+    (list || []).forEach(x => { const p = profiles.find(q => q.name === x.name); if(p) p.points = x.points; else profiles.push(x); });
+    renderBoard();
+  }).getProfiles();
+}
+// Shows the leaderboard as it was before the round, then slides you up past anyone you overtook
+function runRace(){
+  const box = $('race'); if(!box) return;
+  const before = cards.before || [];
+  const after = profiles.map(p => ({ name: p.name, pts: p.points || 0 }));
+  const order = list => list.slice().sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name)).map(x => x.name);
+  const oldOrder = order(before.length ? before : after), newOrder = order(after);
+  const ptsOf = (list, n) => (list.find(x => x.name === n) || { pts: 0 }).pts;
+  const max = Math.max(1, ...after.map(x => x.pts), ...before.map(x => x.pts));
+  const row = n => {
+    const p = profiles.find(x => x.name === n) || { name: n, img: '' }, v = ptsOf(before.length ? before : after, n);
+    return `<div class="brow${n === current ? ' me' : ''}" data-n="${esc(n)}"><span class="bav">${face(p)}</span>`
+      + `<div><div class="bname">${esc(n)}</div><div class="bbar"><div class="bfill" style="width:${Math.max(0, v) / max * 100}%"></div></div></div>`
+      + `<span class="bpts">${v}</span></div>`;
+  };
+  box.innerHTML = oldOrder.map(row).join('');
+  const meOld = oldOrder.indexOf(current), meNew = newOrder.indexOf(current);
+  const passed = oldOrder.slice(0, meOld).filter(n => newOrder.indexOf(n) > meNew);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(() => {
+    const rows = [...box.children], top = {};
+    rows.forEach(r => top[r.dataset.n] = r.getBoundingClientRect().top);
+    newOrder.forEach(n => { const r = rows.find(x => x.dataset.n === n); if(r) box.appendChild(r); });
+    rows.forEach(r => {
+      const n = r.dataset.n, shift = top[n] - r.getBoundingClientRect().top, v = ptsOf(after, n);
+      r.querySelector('.bfill').style.width = Math.max(0, v) / max * 100 + '%';
+      countTo(r.querySelector('.bpts'), ptsOf(before.length ? before : after, n), v, reduce ? 0 : 900);
+      if(shift && !reduce && r.animate) r.animate([{ transform: `translateY(${shift}px)` }, { transform: 'translateY(0)' }], { duration: 900, easing: 'cubic-bezier(.5,0,.2,1)' });
+      if(n === current && passed.length) r.classList.add('rise');
+    });
+    if(passed.length){
+      setTimeout(() => {
+        playFanfare(); confettiRain();
+        const me = box.querySelector('.brow.me');
+        if(me && me.animate && !reduce) me.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.07)' }, { transform: 'scale(1)' }], { duration: 500, easing: 'ease-out', iterations: 2 });
+      }, reduce ? 0 : 650);
+      const names = passed.length === 1 ? passed[0] : passed.slice(0, -1).join(', ') + ' and ' + passed[passed.length - 1];
+      $('passed').textContent = `You passed ${names}!`;
+      setTimeout(() => $('passed').classList.add('show'), reduce ? 0 : 700);
+    }
+  }, 1300); // after the train has pulled in
+}
+function countTo(el, from, to, ms){
+  if(!ms || from === to){ el.textContent = to; return; }
+  const t0 = performance.now();
+  const step = t => { const k = Math.min(1, (t - t0) / ms); el.textContent = Math.round(from + (to - from) * k); if(k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+// ---- Points: +1 for every card right, -1 for every miss, kept forever ----
+function addPoints(d){
+  const me = profiles.find(p => p.name === current); if(!me) return;
+  me.points = (me.points || 0) + d;
+  if(LIVE) google.script.run.addPoints(current, d);
+  else lsSet('dt:profiles', profiles);
+}
+function renderBoard(){
+  const rows = profiles.map(p => ({ p, pts: p.points || 0 })).sort((a, b) => b.pts - a.pts);
+  const max = Math.max(1, ...rows.map(r => r.pts));
+  $('board').innerHTML = '<h3>Leaderboard</h3><p class="sub">+1 for every card you get right, −1 for every miss.</p><div class="perf" aria-hidden="true"></div>'
+    + rows.map((r, i) => `<div class="brow ranked${r.p.name === current ? ' me' : ''}"><span class="rank">${i + 1}</span><span class="bav">${face(r.p)}</span>`
+      + `<div><div class="bname">${esc(r.p.name)}</div><div class="bbar"><div class="bfill" style="width:${Math.max(0, r.pts) / max * 100}%"></div></div></div>`
+      + `<span class="bpts">${r.pts}</span></div>`).join('');
+}
+$('cdirbtn').onclick = () => { cards.dir = cards.dir === 'da' ? 'en' : 'da'; lsSet('dt:cdir', cards.dir); showSetup(); swapAnim($('cdirbtn')); };
+document.querySelectorAll('#optsize button').forEach(b => b.onclick = () => { cards.size = +b.dataset.v; lsSet('dt:csize', cards.size); showSetup(); });
+function beginRound(){
+  const deck = cardPool();
+  for(let i = deck.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+  Object.assign(cards, { deck: deck.slice(0, cards.size), i: 0, right: 0, wrong: 0, busy: false });
+  cards.before = profiles.map(p => ({ name: p.name, pts: p.points || 0 }));
+  $('csetup').hidden = true; $('cplay').hidden = false;
+  playTrainStart();
+  renderCards();
+}
+$('cstart').onclick = beginRound;
+$('csetupbtn').onclick = showSetup;
+function renderCards(){
+  const zone = $('cardzone'), n = cards.deck.length;
+  const showBtns = on => { $('cardbtns').hidden = !on; $('chint').hidden = !on; };
+  if(cards.i >= n){
+    $('cprog').textContent = '';
+    const net = cards.right - cards.wrong, total = (profiles.find(p => p.name === current) || {}).points || 0;
+    const netTxt = (net > 0 ? '+' : net < 0 ? '−' : '') + Math.abs(net) + (Math.abs(net) === 1 ? ' point' : ' points');
+    zone.innerHTML = `<div class="cdone"><h2>Round done</h2><p>${cards.right} right, ${cards.wrong} missed</p><p class="cpoints">${netTxt} this round. You have ${total} in total.</p>`
+      + '<div class="race" id="race"></div><p class="passed" id="passed"></p>'
+      + '<div class="whobar"><button class="ghost" id="csetup2">Change setup</button><button class="primary" id="cagain">Play again</button></div></div>';
+    $('cagain').onclick = beginRound;
+    $('csetup2').onclick = showSetup;
+    runRace();
+    showBtns(false); return;
+  }
+  showBtns(true);
+  const c = cards.deck[cards.i], daFront = cards.dir === 'da';
+  const front = daFront ? c.w : (c.t || '?'), back = daFront ? (c.t || '?') : c.w;
+  $('cprog').textContent = `Card ${cards.i + 1} of ${n}` + (cards.demo ? ' (sample words)' : '');
+  zone.innerHTML = `<div class="cardwrap" id="cardwrap"><div class="card" id="card" tabindex="0" role="button" aria-label="${esc(front)}. Tap to see the answer.">`
+    + `<span class="cside">${daFront ? FLAG.da + 'Danish' : FLAG.en + 'English'}</span>`
+    + `<span class="cfoot">${daFront ? FLAG.da : FLAG.en}</span>`
+    + (canSpeak ? `<button class="speak-sm" id="csay" aria-label="Hear the Danish word"${daFront ? '' : ' hidden'}>${SPEAK_SVG}</button>` : '')
+    + `<span class="stamp yes">Got it</span><span class="stamp no">Missed</span>`
+    + `<div class="cword">${esc(front)}</div><div class="cans" id="cans" hidden>${esc(back)}</div>`
+    + `<span class="ctap" id="ctap">Tap to reveal</span></div></div>`;
+  bindCard(c);
+}
+function revealCard(){
+  const ans = $('cans'); if(!ans) return;
+  playClick();
+  ans.hidden = !ans.hidden;
+  $('ctap').hidden = !ans.hidden;
+  if($('csay') && cards.dir === 'en') $('csay').hidden = ans.hidden;
+}
+function bindCard(c){
+  const card = $('card');
+  if($('csay')) $('csay').onclick = e => { e.stopPropagation(); speak(c.w, $('csay')); };
+  let sx = null, dx = 0, moved = false;
+  const stamps = () => {
+    card.querySelector('.stamp.yes').style.opacity = Math.max(0, Math.min(1, dx / 90));
+    card.querySelector('.stamp.no').style.opacity = Math.max(0, Math.min(1, -dx / 90));
+  };
+  card.addEventListener('pointerdown', e => {
+    if(e.target.closest('.speak-sm') || cards.busy) return;
+    sx = e.clientX; dx = 0; moved = false;
+    card.setPointerCapture(e.pointerId); card.classList.add('drag');
+  });
+  card.addEventListener('pointermove', e => {
+    if(sx === null) return;
+    dx = e.clientX - sx;
+    if(Math.abs(dx) > 6) moved = true;
+    card.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
+    stamps();
+    glowTo(dx);
+    cardGlow(card, dx);
+  });
+  const end = () => {
+    if(sx === null) return;
+    sx = null; card.classList.remove('drag');
+    if(Math.abs(dx) > 90) return answer(dx > 0);
+    card.style.transform = ''; dx = 0; stamps(); glowTo(0, true); cardGlow(card, 0);
+    if(!moved) revealCard();
+  };
+  card.addEventListener('pointerup', end);
+  card.addEventListener('pointercancel', end);
+  card.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); revealCard(); } });
+}
+function answer(correct){
+  const card = $('card');
+  if(!card || cards.busy) return;
+  cards.busy = true;
+  card.classList.remove('drag');
+  card.style.transform = `translateX(${correct ? 140 : -140}%) rotate(${correct ? 22 : -22}deg)`;
+  card.querySelector(correct ? '.stamp.yes' : '.stamp.no').style.opacity = 1;
+  flashGlow(correct); cardGlow(card, correct ? 200 : -200);
+  if(correct){ playWin(); sparkle(); } else { playLose(); }
+  const c = cards.deck[cards.i];
+  c.g = correct ? c.g + 1 : 0;
+  correct ? cards.right++ : cards.wrong++;
+  addPoints(correct ? 1 : -1);
+  if(!cards.demo){
+    if(state.statuses[c.w]) state.statuses[c.w].g = c.g;
+    if(LIVE) google.script.run.cardResult(user(), c.w, correct);
+    else save(user(), state.statuses);
+  }
+  setTimeout(() => {
+    cards.i++; cards.busy = false;
+    if(cards.i >= cards.deck.length) playTrainStop();
+    if(correct && c.g > 0 && c.g % ASK_EVERY === 0) askKnown(c);
+    else renderCards();
+  }, 260);
+}
+function askKnown(c){
+  $('askword').textContent = c.w;
+  $('asktr').textContent = c.t || '';
+  $('askq').textContent = `You’ve got this right ${c.g} times in a row. Mark it as known?`;
+  $('ask').hidden = false;
+  const close = () => { $('ask').hidden = true; renderCards(); };
+  $('askno').onclick = close;
+  $('askyes').onclick = () => { if(!cards.demo) { setWordStatus(c.w, 'known'); renderCounts(); } close(); };
+}
+$('chit').onclick = () => answer(true);
+$('cmiss').onclick = () => answer(false);
+document.addEventListener('keydown', e => {
+  if(mode !== 'cards' || !$('ask').hidden || e.target.closest('textarea, input')) return;
+  if(e.key === 'ArrowRight') answer(true);
+  if(e.key === 'ArrowLeft') answer(false);
+});
+
+// ---- Glow and sparkles ----
+function glowTo(dx, release){
+  const r = $('glowR'), l = $('glowL');
+  r.classList.toggle('drag', !release); l.classList.toggle('drag', !release);
+  r.style.opacity = Math.max(0, Math.min(1, dx / 150));
+  l.style.opacity = Math.max(0, Math.min(1, -dx / 150));
+}
+function flashGlow(correct){
+  const on = $(correct ? 'glowR' : 'glowL'), off = $(correct ? 'glowL' : 'glowR');
+  on.classList.remove('drag'); off.classList.remove('drag');
+  on.style.opacity = 1; off.style.opacity = 0;
+  setTimeout(() => { on.style.opacity = 0; }, 420);
+}
+// The outline and glow are drawn around the card's real shape (notches included)
+function cardGlow(card, dx){
+  const wrap = card.parentElement;
+  if(!wrap || !wrap.classList.contains('cardwrap')) return;
+  if(!dx){ wrap.style.filter = ''; return; }
+  const k = Math.min(1, Math.abs(dx) / 120), rgb = dx > 0 ? '43,182,115' : '220,38,60';
+  const w = (1 + 1.2 * k).toFixed(2), c = `rgba(${rgb},${(0.45 + 0.55 * k).toFixed(2)})`;
+  wrap.style.filter = `drop-shadow(${w}px 0 0 ${c}) drop-shadow(-${w}px 0 0 ${c}) drop-shadow(0 ${w}px 0 ${c}) drop-shadow(0 -${w}px 0 ${c}) drop-shadow(0 0 ${(6 + 16 * k).toFixed(1)}px rgba(${rgb},${(0.7 * k).toFixed(2)}))`;
+}
+// Confetti: small glowing flecks in one colour family (slight hue changes) that fly, flutter and fall
+function confettiPiece(x, y, vx, vy, ms, hue){
+  const box = $('sparks'), el = document.createElement('span');
+  const h = hue + (Math.random() * 28 - 14), l = 55 + Math.random() * 20;
+  const col = `hsl(${h} 85% ${l}%)`, glow = `hsl(${h} 90% 60% / .75)`;
+  el.className = 'spark';
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  const size = 3 + Math.random() * 5;
+  el.style.setProperty('--w', size + 'px');
+  el.style.setProperty('--h', size * (1 + Math.random() * .8) + 'px');
+  el.style.setProperty('--c', col);
+  el.style.boxShadow = `0 0 4px 1px ${glow}, 0 0 12px 2px ${glow}`;
+  box.appendChild(el);
+  const spin = (Math.random() < .5 ? -1 : 1) * (360 + Math.random() * 720), flip = 360 + Math.random() * 1080;
+  const g = 700; // gravity, px per second squared
+  const frames = [];
+  for(let k = 0; k <= 10; k++){
+    const t = (k / 10) * ms / 1000, drag = 1 - Math.min(.6, t * .5);
+    frames.push({
+      transform: `translate(${vx * t * drag}px,${vy * t + g * t * t / 2}px) rotate(${spin * k / 10}deg) rotateX(${flip * k / 10}deg)`,
+      opacity: k === 0 ? 0 : k > 7 ? (10 - k) / 3 : 1
+    });
+  }
+  el.animate(frames, { duration: ms, easing: 'linear', fill: 'forwards' });
+  setTimeout(() => el.remove(), ms + 50);
+}
+// Right answer: confetti bursts out of the middle of the right edge and opens towards the centre
+function sparkle(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches || !document.body.animate) return;
+  const W = innerWidth, H = innerHeight;
+  for(let i = 0; i < 44; i++){
+    const ang = Math.PI + (Math.random() - 0.5) * Math.PI * 0.85, speed = W * (0.9 + Math.random() * 0.9);
+    confettiPiece(W - 4, H / 2, Math.cos(ang) * speed, Math.sin(ang) * speed * 0.8 - 160, 1100 + Math.random() * 600, 145);
+  }
+}
+// Overtaking a friend: a big confetti shower across the whole screen
+function confettiRain(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches || !document.body.animate) return;
+  const W = innerWidth, H = innerHeight;
+  for(let i = 0; i < 110; i++){
+    setTimeout(() => {
+      const fromLeft = i % 2 === 0;
+      const ang = fromLeft ? -Math.PI / 3 - Math.random() * .5 : -2 * Math.PI / 3 + Math.random() * .5, speed = H * (0.9 + Math.random() * 0.6);
+      confettiPiece(fromLeft ? 0 : W, H * 0.75, Math.cos(ang) * speed, Math.sin(ang) * speed, 1800 + Math.random() * 900, 45);
+    }, Math.random() * 500);
+  }
+}
+
+// ---- Sounds (made in the browser, no files) ----
+const sound = { on: lsGet('dt:sound', true), ctx: null };
+// Phones can keep web sounds muted until the first touch (and iPhone/iPad silent mode mutes them).
+// On the first touch we start the audio and ask the browser to treat it as "playback".
+function unlockAudio(){
+  try { if(navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e) {}
+  const c = audio(); if(!c) return;
+  const b = c.createBuffer(1, 1, 22050), src = c.createBufferSource();
+  src.buffer = b; src.connect(c.destination); src.start(0);
+}
+['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, { capture: true, passive: true }));
+function audio(){
+  if(!sound.on) return null;
+  if(!sound.ctx){
+    const C = window.AudioContext || window.webkitAudioContext;
+    if(!C) return null;
+    sound.ctx = new C();
+  }
+  if(sound.ctx.state === 'suspended') sound.ctx.resume();
+  return sound.ctx;
+}
+// Soft, low "clickety" tap: a muffled tick plus a tiny low thump
+function playClick(){
+  const c = audio(); if(!c) return;
+  const t = c.currentTime, len = Math.floor(c.sampleRate * 0.035);
+  const buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 5);
+  const src = c.createBufferSource(); src.buffer = buf;
+  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.8;
+  const g = c.createGain(); g.gain.value = 0.5;
+  src.connect(lp).connect(g).connect(c.destination); src.start(t);
+  const o = c.createOscillator(), og = c.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(80, t + 0.07);
+  og.gain.setValueAtTime(0.16, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+  o.connect(og).connect(c.destination); o.start(t); o.stop(t + 0.1);
+}
+function tone(c, freq, start, dur, type, vol, endFreq){
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, start);
+  if(endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, start + dur);
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.exponentialRampToValueAtTime(vol, start + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  o.connect(g).connect(c.destination); o.start(start); o.stop(start + dur + 0.03);
+}
+// Happy: a warm rising arpeggio with a little twinkle on top
+function playWin(){
+  const c = audio(); if(!c) return;
+  const t = c.currentTime;
+  [392, 494, 587, 784].forEach((f, i) => tone(c, f, t + i * 0.075, 0.38, 'triangle', 0.14));
+  [1568, 2093, 2637].forEach((f, i) => tone(c, f, t + 0.3 + i * 0.05, 0.3, 'sine', 0.035));
+}
+// Overtaking a friend: a short brass-style fanfare with a drum hit and twinkles
+function brass(c, f, start, dur, vol){
+  const o = c.createOscillator(), o2 = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain();
+  o.type = 'sawtooth'; o2.type = 'sawtooth'; o.frequency.value = f; o2.frequency.value = f * 1.004;
+  lp.type = 'lowpass'; lp.frequency.setValueAtTime(700, start); lp.frequency.linearRampToValueAtTime(2600, start + 0.08); lp.frequency.linearRampToValueAtTime(1400, start + dur);
+  g.gain.setValueAtTime(0.0001, start); g.gain.exponentialRampToValueAtTime(vol, start + 0.04); g.gain.setValueAtTime(vol, start + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  o.connect(lp); o2.connect(lp); lp.connect(g).connect(c.destination);
+  o.start(start); o2.start(start); o.stop(start + dur + 0.05); o2.stop(start + dur + 0.05);
+}
+function drum(c, start, vol){
+  const len = Math.floor(c.sampleRate * 0.25), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+  const src = c.createBufferSource(), lp = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = buf; lp.type = 'lowpass'; lp.frequency.value = 1800; g.gain.value = vol;
+  src.connect(lp).connect(g).connect(c.destination); src.start(start);
+  tone(c, 120, start, 0.25, 'sine', vol * 0.9, 55);
+}
+function playFanfare(){
+  const c = audio(); if(!c) return;
+  const t = c.currentTime + 0.02;
+  drum(c, t, 0.35);
+  [[392, 0], [392, 0.13], [392, 0.26]].forEach(([f, at]) => brass(c, f, t + at, 0.12, 0.07));
+  brass(c, 523, t + 0.4, 0.9, 0.08); brass(c, 659, t + 0.4, 0.9, 0.06); brass(c, 784, t + 0.4, 0.9, 0.06);
+  drum(c, t + 0.4, 0.45);
+  [2093, 2637, 3136, 2637, 3520].forEach((f, i) => tone(c, f, t + 0.55 + i * 0.07, 0.35, 'sine', 0.03));
+}
+// Train leaving: a steam whistle, then chugging that speeds up
+function noiseBurst(c, start, dur, vol, freq, type){
+  const len = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+  const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = buf; f.type = type || 'lowpass'; f.frequency.value = freq; g.gain.value = vol;
+  src.connect(f).connect(g).connect(c.destination); src.start(start);
+}
+function whistle(c, start, dur, vol){
+  [523, 659, 784].forEach(fr => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(fr * 0.94, start); o.frequency.linearRampToValueAtTime(fr, start + 0.12);
+    g.gain.setValueAtTime(0.0001, start); g.gain.exponentialRampToValueAtTime(vol, start + 0.08);
+    g.gain.setValueAtTime(vol, start + dur - 0.25); g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g).connect(c.destination); o.start(start); o.stop(start + dur + 0.05);
+  });
+  noiseBurst(c, start, dur, vol * 1.6, 2200, 'bandpass'); // the breathy steam
+}
+function playTrainStart(){
+  const c = audio(); if(!c) return;
+  const t = c.currentTime + 0.02;
+  whistle(c, t, 0.9, 0.045);
+  let at = t + 0.75;
+  [0.34, 0.3, 0.26, 0.22, 0.19, 0.17, 0.15, 0.14].forEach((gap, i) => {
+    noiseBurst(c, at, 0.12, 0.28 + i * 0.02, 520, 'lowpass');
+    at += gap;
+  });
+}
+// Train arriving: chugging that slows down, a soft brake squeal and a final hiss of steam
+function playTrainStop(){
+  const c = audio(); if(!c) return;
+  const t = c.currentTime + 0.02;
+  let at = t;
+  [0.15, 0.18, 0.22, 0.27, 0.34].forEach((gap, i) => {
+    noiseBurst(c, at, 0.12, 0.32 - i * 0.04, 520, 'lowpass');
+    at += gap;
+  });
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(1900, at - 0.3); o.frequency.linearRampToValueAtTime(1500, at + 0.5);
+  g.gain.setValueAtTime(0.0001, at - 0.3); g.gain.exponentialRampToValueAtTime(0.02, at - 0.15); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.5);
+  o.connect(g).connect(c.destination); o.start(at - 0.3); o.stop(at + 0.55);
+  noiseBurst(c, at + 0.2, 0.9, 0.12, 3000, 'highpass');
+}
+// Sad: two sliding notes going down, "wah-wahh"
+function playLose(){
+  const c = audio(); if(!c) return;
+  const t = c.currentTime;
+  tone(c, 294, t, 0.3, 'triangle', 0.15, 262);
+  tone(c, 247, t + 0.28, 0.6, 'triangle', 0.15, 175);
+}
+// Every button (and tappable word) gets the soft click. The ✓ / ✗ buttons use the win/lose sounds instead.
+document.addEventListener('click', e => {
+  const el = e.target.closest('button, [role="button"]');
+  if(!el || el.disabled || el.closest('.cbtn, .speak, .speak-sm') || el.id === 'card') return;
+  playClick();
+}, true);
+function renderSoundBtn(){
+  $('soundbtn').innerHTML = (sound.on
+    ? '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>Sounds on'
+    : '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 5M22 9l-5 5"/></svg>Sounds off');
+}
+$('soundbtn').onclick = () => { sound.on = !sound.on; lsSet('dt:sound', sound.on); renderSoundBtn(); if(sound.on) playClick(); };
+renderSoundBtn();
+
+// ---- Swipe gestures ----
+// Swipe down anywhere closes the word menu; swipe left-to-right opens the modes menu (right-to-left closes it).
+(() => {
+  let sx = null, sy = 0, kind = null, fired = false;
+  document.addEventListener('touchstart', e => {
+    const t = e.touches[0]; sx = t.clientX; sy = t.clientY; fired = false;
+    if($('sheet').classList.contains('open')) kind = 'sheet';
+    else if(!$('who').hidden || !$('ask').hidden || document.body.classList.contains('paged')) kind = null;
+    else if($('drawer').classList.contains('open')) kind = 'drawer';
+    else if(e.target.closest('.card, textarea, input')) kind = null;
+    else kind = 'menu';
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if(sx === null || !kind || fired) return;
+    const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+    if(kind === 'sheet'){
+      if(dy > 0 && dy > Math.abs(dx)){ const s = $('sheet'); s.style.transition = 'none'; s.style.transform = `translateY(${dy}px)`; }
+      return;
+    }
+    if(kind === 'menu' && dx > 60 && dx > Math.abs(dy) * 1.5){ fired = true; setMenu(true); }
+    if(kind === 'drawer' && dx < -60 && -dx > Math.abs(dy) * 1.5){ fired = true; setMenu(false); }
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if(kind === 'sheet' && sx !== null){
+      const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy, s = $('sheet');
+      s.style.transition = ''; s.style.transform = '';
+      if(dy > 60 && dy > Math.abs(dx)) s.classList.remove('open');
+    }
+    sx = null;
+  });
+})();
+
+initProfiles();
+</script>
 </body>
 </html>
