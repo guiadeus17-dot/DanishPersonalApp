@@ -1,54 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ordbog</title>
-
-<!-- Home-screen app metadata -->
-<meta name="application-name" content="Ordbog">
-<meta name="apple-mobile-web-app-title" content="Ordbog">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<!-- Matches --bg in the app so the status bar blends seamlessly -->
-<meta name="theme-color" content="#F2F4F6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#12171D" media="(prefers-color-scheme: dark)">
-
-<link rel="manifest" href="./manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
-
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #F2F4F6;
-  }
-  @media (prefers-color-scheme: dark) {
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+  <title>Danish Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <!-- The phone's status and navigation bars follow light/dark mode, matching the app's own background -->
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F2F4F6">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#12171D">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
     html, body {
-      background: #12171D;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #F2F4F6;
     }
-  }
-  iframe {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-    display: block;
-  }
-</style>
+    @media (prefers-color-scheme: dark) {
+      html, body { background-color: #12171D; }
+    }
+    iframe {
+      display: block;
+      width: 100%;
+      height: 100vh;  /* older browsers */
+      height: 100dvh; /* follows the real visible height (keyboard, browser bars) */
+      border: none;
+    }
+  </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
+  </script>
 </head>
 <body>
-  <iframe 
-    src="https://script.google.com/macros/s/AKfycbxGR-93BK4ll8LhH867RW5zpiA8NFrxdq0wPflGkrrVFp7xBT-QIIg2cYo7oJj6yKI/exec" 
-    title="Ordbog"
-    allow="microphone">
-  </iframe>
+  <iframe src="https://script.google.com/macros/s/AKfycbw64qzpTXmX3Gsf0C5C9WDLWRRnRir6QJORf2Lf4wcH_a8Xp2sNUQy_vDDMLSec9pM/exec" allow="autoplay; camera; microphone"></iframe>
 </body>
 </html>
